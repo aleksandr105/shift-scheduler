@@ -1,0 +1,156 @@
+/* ScheduleTable styles */
+.scheduleContainer {
+  padding: 16px;
+}
+
+.printContainer {
+  margin: 0;
+}
+
+.noPrint {
+  margin-bottom: 16px;
+}
+
+.printButton {
+  margin-top: 16px;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.scheduleTable {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.scheduleTable th,
+.scheduleTable td {
+  border: 1px solid #ddd;
+  padding: 4px;
+  text-align: center;
+  min-width: 40px;
+}
+
+.employeeHeader {
+  background-color: #f0f0f0;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.employeeName {
+  background-color: #fafafa;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+.stickyCol {
+  background-color: #fafafa;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+.dateHeader {
+  background-color: #f9f9f9;
+}
+
+.weekendHeader {
+  background-color: #ffe5e5;
+}
+
+.weekendRow {
+  background-color: #fff5f5;
+}
+
+.shiftDay {
+  background-color: #d4edda; /* light green */
+}
+
+.shiftNight {
+  background-color: #cce5ff; /* light blue */
+}
+
+.shiftOffice {
+  background-color: #fff3cd; /* light yellow */
+}
+
+.shiftOff {
+  background-color: #e2e3e5; /* light gray */
+}
+
+.shiftVacation {
+  background-color: #f8d7da; /* light red */
+}
+
+.rotatedTh {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  vertical-align: bottom;
+  padding: 4px;
+  max-width: 30px;
+}
+
+.rotatedText {
+  display: block;
+  transform: rotate(180deg);
+}
+
+.legend {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.legendColor,
+.boxDay,
+.boxNight,
+.boxOffice,
+.boxOff,
+.boxVacation {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  border: 1px solid #000;
+}
+
+.boxDay { background-color: #d4edda; }
+.boxNight { background-color: #cce5ff; }
+.boxOffice { background-color: #fff3cd; }
+.boxOff { background-color: #e2e3e5; }
+.boxVacation { background-color: #f8d7da; }
+
+.departmentSection {
+  page-break-after: always;
+  margin-bottom: 32px;
+}
+
+.tableTitle {
+  margin-bottom: 8px;
+  font-size: 1.2em;
+  text-align: left;
+}
+
+.pageBreak {
+  page-break-after: always;
+}
+
+@media print {
+  .noPrint {
+    display: none;
+  }
+  .scheduleTable {
+    font-size: 10pt;
+  }
+  .departmentSection {
+    page-break-after: always;
+  }
+}
