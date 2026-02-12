@@ -21,35 +21,51 @@ const ScheduleSettings = ({
   const [error, setError] = useState('');
 
   // Обновляем ограничения при изменении сотрудников или выбранного отдела
+  // Инициализация и обновление ограничений (manualConstraints) при изменении месяца, года или отдела.
+  // Кроме того, автоматически проставляем "0" в пятницы и субботы для сотрудников, у которых установлен флаг
+  // `doesNotWorkOnSaturdays`.
   useEffect(() => {
-    if (selectedMonthYear && selectedDepartment) {
-      const filteredEmployees = employees.filter(emp => emp.departmentId === selectedDepartment);
+    if (!selectedMonthYear || !selectedDepartment) return;
 
-      // Инициализируем ограничения для сотрудников текущего отдела
-      const newConstraints = {};
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
+    // Находим объект отдела, чтобы получить его название (employees хранят название отдела, а не id).
+    const deptObj = departments.find(d => d.id === selectedDepartment);
+    const deptName = deptObj ? deptObj.name : null;
+    if (!deptName) return;
 
-      filteredEmployees.forEach(employee => {
-        if (!manualConstraints[employee.id]) {
-          newConstraints[employee.id] = Array(daysInMonth).fill('');
-        } else {
-          // Сохраняем существующие ограничения, дополняя недостающие дни
-          const existingConstraints = manualConstraints[employee.id] || [];
-          newConstraints[employee.id] = [...existingConstraints];
-          while (newConstraints[employee.id].length < daysInMonth) {
-            newConstraints[employee.id].push('');
+    const filteredEmployees = employees.filter(emp => emp.department === deptName);
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const newConstraints = {};
+
+    filteredEmployees.forEach(employee => {
+      // Если ограничения уже есть – копируем их, иначе создаём массив пустых строк.
+      const existing = manualConstraints[employee.id] || [];
+      const arr = existing.slice(0, daysInMonth);
+      while (arr.length < daysInMonth) arr.push('');
+
+      // Автоматическое заполнение 0 для пятницы (5) и субботы (6), если сотрудник не работает по субботам.
+      // Заполняем только если пользователь ещё не задал значение, позволяя переопределить вручную.
+      if (employee.doesNotWorkOnSaturdays) {
+        for (let dayIdx = 0; dayIdx < daysInMonth; dayIdx++) {
+          const date = new Date(year, month, dayIdx + 1);
+          const dow = date.getDay(); // 0=Sun, 5=Fri, 6=Sat
+          if (dow === 5 || dow === 6) {
+            if (!arr[dayIdx]) {
+              arr[dayIdx] = '0';
+            }
           }
         }
-      });
+      }
 
-      setManualConstraints(prev => ({
-        ...prev,
-        ...newConstraints,
-      }));
-    }
-    // Exclude `manualConstraints` from dependencies to prevent infinite loop.
-    // The effect only needs to run when the selected month/year, department, or employee list changes.
-  }, [selectedDepartment, employees, selectedMonthYear, month, year]);
+      newConstraints[employee.id] = arr;
+    });
+
+    setManualConstraints(prev => ({
+      ...prev,
+      ...newConstraints,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDepartment, employees, selectedMonthYear, month, year, departments]);
 
   const handleMonthChange = date => {
     if (date) {
@@ -58,20 +74,8 @@ const ScheduleSettings = ({
       setMonth(selectedMonth);
       setYear(selectedYear);
       setSelectedMonthYear(date);
-
-      // Сброс ограничений при изменении месяца
-      const daysInNewMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
-      const updatedConstraints = {};
-
-      Object.keys(manualConstraints).forEach(empId => {
-        updatedConstraints[empId] = Array(daysInNewMonth).fill('');
-        // Копируем значения, если возможно
-        for (let i = 0; i < Math.min(manualConstraints[empId].length, daysInNewMonth); i++) {
-          updatedConstraints[empId][i] = manualConstraints[empId][i];
-        }
-      });
-
-      setManualConstraints(updatedConstraints);
+      // При смене месяца сбрасываем ограничения – useEffect выше пересоздаст их с учётом автоматических 0.
+      setManualConstraints({});
     }
   };
 
@@ -113,11 +117,13 @@ const ScheduleSettings = ({
 
   // Подготовка данных для таблицы
   const prepareTableData = () => {
-    if (!selectedDepartment || !selectedMonthYear) {
-      return [];
-    }
+    if (!selectedDepartment || !selectedMonthYear) return [];
 
-    const filteredEmployees = employees.filter(emp => emp.departmentId === selectedDepartment);
+    const deptObj = departments.find(d => d.id === selectedDepartment);
+    const deptName = deptObj ? deptObj.name : null;
+    if (!deptName) return [];
+
+    const filteredEmployees = employees.filter(emp => emp.department === deptName);
 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -125,7 +131,7 @@ const ScheduleSettings = ({
     return filteredEmployees.map(employee => ({
       key: employee.id,
       name: `${employee.firstName} ${employee.lastName}`,
-      ...days.reduce((acc, day, index) => {
+      ...days.reduce((acc, _, index) => {
         acc[`day_${index}`] = (
           <Select
             value={manualConstraints[employee.id]?.[index] || ''}
@@ -149,6 +155,9 @@ const ScheduleSettings = ({
       return [];
     }
 
+    // Map JavaScript getDay() index to Russian weekday abbreviations.
+    const weekdayMap = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const columns = [
       {
@@ -161,8 +170,16 @@ const ScheduleSettings = ({
     ];
 
     for (let i = 0; i < daysInMonth; i++) {
+      const date = new Date(year, month, i + 1);
+      const dow = date.getDay(); // 0 = Sun, 1 = Mon, ...
+      const weekday = weekdayMap[dow];
       columns.push({
-        title: i + 1,
+        title: (
+          <div style={{ textAlign: 'center' }}>
+            <div>{weekday}</div>
+            <div>{i + 1}</div>
+          </div>
+        ),
         dataIndex: `day_${i}`,
         key: `day_${i}`,
         width: 70,

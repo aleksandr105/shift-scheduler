@@ -24,13 +24,15 @@
   width: 100%;
 }
 
-.scheduleTable th,
-.scheduleTable td {
-  border: 1px solid #ddd;
-  padding: 4px;
-  text-align: center;
-  min-width: 40px;
-}
+ .scheduleTable th,
+ .scheduleTable td {
+   border: 1px solid #ddd;
+   padding: 4px;
+   text-align: center;
+   /* Increase minimum width to accommodate full shift text without truncation */
+   min-width: 80px;
+   white-space: nowrap;
+ }
 
 .employeeHeader {
   background-color: #f0f0f0;

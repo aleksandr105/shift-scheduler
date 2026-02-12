@@ -52,6 +52,7 @@ const EmployeeManager = ({
   }, [employees, currentDepartmentName]);
 
   const onFinish = values => {
+    console.log('EmployeeManager: Adding new employee', values);
     const newEmployee = {
       id: Date.now(), // временный ID, будет заменен на нормальный при сохранении
       ...values,
@@ -59,7 +60,8 @@ const EmployeeManager = ({
     onAddEmployee(newEmployee);
     // Добавляем сотрудника в локальное состояние для текущего отдела
     if (currentDepartmentName && newEmployee.department === currentDepartmentName) {
-      setDepartmentEmployees(prev => [...prev, newEmployee]);
+      // Добавляем нового сотрудника в начало списка, чтобы он отображался первым
+      setDepartmentEmployees(prev => [newEmployee, ...prev]);
     }
     form.resetFields();
   };

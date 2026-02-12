@@ -74,8 +74,9 @@ function App() {
     }
   }, [employees, initialLoadCompleted]);
 
+  // Добавляем нового сотрудника в начало списка, чтобы он отображался первым в таблице
   const handleAddEmployee = newEmployee => {
-    const updatedEmployees = [...employees, { ...newEmployee, id: Date.now() }];
+    const updatedEmployees = [{ ...newEmployee, id: Date.now() }, ...employees];
     setEmployees(updatedEmployees);
   };
 
@@ -84,10 +85,27 @@ function App() {
     setEmployees(updatedEmployees);
   };
 
+  // Сохраняем сгенерированный график и переключаемся на вкладку "Grafik"
   const handleGenerateSchedule = scheduleData => {
     setGeneratedSchedule(scheduleData);
-    // Сохраняем в localStorage
     localStorage.setItem('generatedSchedule', JSON.stringify(scheduleData));
+    setActiveTab('schedule-table');
+  };
+
+  // Обновление отдельной ячейки итогового графика (для редактирования пользователем)
+  const handleScheduleCellChange = (employeeId, dayIndex, newValue) => {
+    if (!generatedSchedule) return;
+    const updated = { ...generatedSchedule };
+    // Ensure schedule object exists
+    if (!updated.schedule) updated.schedule = {};
+    if (!updated.schedule[employeeId]) {
+      // Initialize with nulls for all days of month
+      const daysInMonth = new Date(updated.year, updated.month + 1, 0).getDate();
+      updated.schedule[employeeId] = Array(daysInMonth).fill(null);
+    }
+    updated.schedule[employeeId][dayIndex] = newValue || null;
+    setGeneratedSchedule(updated);
+    localStorage.setItem('generatedSchedule', JSON.stringify(updated));
   };
 
   const handleDepartmentChange = departmentId => {
@@ -136,6 +154,7 @@ function App() {
                 generatedSchedule={generatedSchedule}
                 departments={departments}
                 employees={employees}
+                onCellChange={handleScheduleCellChange}
               />
             ),
           },
