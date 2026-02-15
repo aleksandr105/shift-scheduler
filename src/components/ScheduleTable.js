@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, Select } from 'antd';
 import styles from './ScheduleTable.module.css';
+import { formatShiftCompact } from '../utils/formatShiftCompact';
 
 // `onCellChange` is a callback to update a specific cell in the generated schedule.
 const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange }) => {
@@ -13,6 +14,28 @@ const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange
   }
 
   const { schedule, month, year } = generatedSchedule || {};
+
+  // Render exactly one schedule: the last generated one.
+  // `generatedSchedule` is generated for a single department, but the UI previously
+  // rendered tables for *all* departments, producing an extra empty/old table.
+  const resolveDepartmentToRender = () => {
+    if (generatedSchedule.departmentName) return generatedSchedule.departmentName;
+
+    // Backward compatibility for older saved schedules that don't have department metadata.
+    // Infer the department from employee ids present in `schedule`.
+    if (schedule && typeof schedule === 'object') {
+      const employeeIdsWithSchedule = new Set(Object.keys(schedule));
+      const matchingEmployees = employees.filter(emp =>
+        employeeIdsWithSchedule.has(String(emp.id))
+      );
+      const deptName = matchingEmployees.find(Boolean)?.department;
+      if (deptName) return deptName;
+    }
+
+    return null;
+  };
+
+  const departmentNameToRender = resolveDepartmentToRender();
   const monthNames = [
     'Styczeń',
     'Luty',
@@ -72,33 +95,64 @@ const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange
         </Button>
       </div>
 
-      {departments.map(dept => {
-        const deptEmployees = employees.filter(emp => emp.department === dept.name);
+      {(() => {
+        const deptName = departmentNameToRender;
+        if (!deptName) return null;
+
+        const deptEmployees = employees.filter(emp => emp.department === deptName);
         if (deptEmployees.length === 0) return null;
+
         return (
-          <div key={dept.id} className={styles.departmentSection}>
+          <div className={styles.departmentSection}>
             <h2 className={styles.tableTitle}>
-              Grafik – {dept.name} – {monthName} {year}
+              Grafik – {deptName} – {monthName} {year}
             </h2>
             <div className={styles.tableWrapper}>
               <table className={styles.scheduleTable}>
                 <thead>
                   <tr>
                     <th className={styles.stickyCol}>Data</th>
-                    {deptEmployees.map(emp => (
-                      <th key={emp.id}>{emp.lastName}</th>
-                    ))}
+                    {deptEmployees.map(emp => {
+                      const fullName = [emp.firstName, emp.lastName].filter(Boolean).join(' ');
+                      return (
+                        <th key={emp.id} className={styles.employeeHeaderCell}>
+                          <div className={styles.employeeHeaderWrap} title={fullName}>
+                            {/*
+                              Sizer keeps the header row tall enough to avoid clipping.
+                              Visible text is rotated via transform (requirement).
+                            */}
+                            <span className={styles.employeeHeaderSizer} aria-hidden="true">
+                              {fullName}
+                            </span>
+                            <span className={styles.employeeHeaderText}>
+                              <span className={styles.employeeHeaderTextInner}>{fullName}</span>
+                            </span>
+                          </div>
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
                   {dates.map(day => {
                     const dateObj = new Date(year, month, day);
                     const dow = dateObj.getDay();
-                    const weekdayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-                    const headerLabel = `${day} ${weekdayNames[dow]}`;
+                    const weekdayNames = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb'];
+                    const isWeekend = dow === 0 || dow === 6;
                     return (
                       <tr key={day}>
-                        <td className={styles.stickyCol}>{headerLabel}</td>
+                        <td className={styles.stickyCol}>
+                          <div
+                            className={
+                              isWeekend
+                                ? `${styles.settingsDateCell} ${styles.settingsWeekendDateCell}`
+                                : styles.settingsDateCell
+                            }
+                          >
+                            <span className={styles.settingsDateNumber}>{day}</span>
+                            <span className={styles.settingsDateWeekday}>{weekdayNames[dow]}</span>
+                          </div>
+                        </td>
                         {deptEmployees.map(emp => {
                           const currentShift =
                             schedule && schedule[emp.id] ? schedule[emp.id][day - 1] : '';
@@ -110,7 +164,10 @@ const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange
                             }
                           };
                           return (
-                            <td key={emp.id} className={getShiftClass(value)}>
+                            <td
+                              key={emp.id}
+                              className={`${styles.shiftCell} ${getShiftClass(value)}`}
+                            >
                               <Select
                                 value={value}
                                 onChange={handleChange}
@@ -120,8 +177,12 @@ const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange
                                 <Select.Option value=""> </Select.Option>
                                 <Select.Option value="0">0</Select.Option>
                                 <Select.Option value="U">U</Select.Option>
-                                <Select.Option value="7-19">07:00–19:00</Select.Option>
-                                <Select.Option value="19-7">19:00–07:00</Select.Option>
+                                <Select.Option value="7-19">
+                                  {formatShiftCompact('7-19')}
+                                </Select.Option>
+                                <Select.Option value="19-7">
+                                  {formatShiftCompact('19-7')}
+                                </Select.Option>
                               </Select>
                             </td>
                           );
@@ -135,10 +196,10 @@ const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange
 
             <div className={styles.legend}>
               <div className={styles.legendItem}>
-                <span className={styles.boxDay}></span> 07:00–19:00 (Dzienny)
+                <span className={styles.boxDay}></span> {formatShiftCompact('7-19')} (Dzienny)
               </div>
               <div className={styles.legendItem}>
-                <span className={styles.boxNight}></span> 19:00–07:00 (Nocny)
+                <span className={styles.boxNight}></span> {formatShiftCompact('19-7')} (Nocny)
               </div>
               <div className={styles.legendItem}>
                 <span className={styles.boxOff}></span> 0 (Wolne)
@@ -150,7 +211,7 @@ const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange
             <div className={styles.pageBreak}></div>
           </div>
         );
-      })}
+      })()}
     </div>
   );
 };

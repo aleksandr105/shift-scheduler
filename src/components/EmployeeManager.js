@@ -52,7 +52,6 @@ const EmployeeManager = ({
   }, [employees, currentDepartmentName]);
 
   const onFinish = values => {
-    console.log('EmployeeManager: Adding new employee', values);
     const newEmployee = {
       id: Date.now(), // временный ID, будет заменен на нормальный при сохранении
       ...values,

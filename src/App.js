@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Tabs } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Tabs, ConfigProvider } from 'antd';
+// Updated import for Ant Design Polish locale (compatible with current AntD version).
+import plPL from 'antd/locale/pl_PL';
 import EmployeeManager from './components/EmployeeManager';
 import ScheduleSettings from './components/ScheduleSettings';
 import ScheduleTable from './components/ScheduleTable';
@@ -87,8 +89,18 @@ function App() {
 
   // Сохраняем сгенерированный график и переключаемся на вкладку "Grafik"
   const handleGenerateSchedule = scheduleData => {
-    setGeneratedSchedule(scheduleData);
-    localStorage.setItem('generatedSchedule', JSON.stringify(scheduleData));
+    // Attach department metadata so the schedule page can deterministically render
+    // only the last generated schedule (single department) and avoid showing
+    // extra empty/old department tables.
+    const deptObj = departments.find(d => d.id === selectedDepartment);
+    const schedulePayload = {
+      ...scheduleData,
+      departmentId: selectedDepartment ?? null,
+      departmentName: deptObj ? deptObj.name : null,
+    };
+
+    setGeneratedSchedule(schedulePayload);
+    localStorage.setItem('generatedSchedule', JSON.stringify(schedulePayload));
     setActiveTab('schedule-table');
   };
 
@@ -113,54 +125,56 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <h1>System zarządzania zmianami pracy</h1>
-      <Tabs
-        activeKey={activeTab}
-        onChange={setActiveTab}
-        items={[
-          {
-            key: 'employees',
-            label: 'Pracownicy',
-            children: (
-              <EmployeeManager
-                employees={employees}
-                onAddEmployee={handleAddEmployee}
-                onDeleteEmployee={handleDeleteEmployee}
-                currentDepartment={selectedDepartment}
-                departments={departments}
-              />
-            ),
-          },
-          {
-            key: 'schedule-settings',
-            label: 'Ustawienia grafiku',
-            children: (
-              <ScheduleSettings
-                departments={departments}
-                employees={employees}
-                onGenerateSchedule={handleGenerateSchedule}
-                generatedSchedule={generatedSchedule}
-                selectedDepartment={selectedDepartment}
-                onDepartmentChange={handleDepartmentChange}
-              />
-            ),
-          },
-          {
-            key: 'schedule-table',
-            label: 'Grafik',
-            children: (
-              <ScheduleTable
-                generatedSchedule={generatedSchedule}
-                departments={departments}
-                employees={employees}
-                onCellChange={handleScheduleCellChange}
-              />
-            ),
-          },
-        ]}
-      />
-    </div>
+    <ConfigProvider locale={plPL}>
+      <div className="App">
+        <h1>System zarządzania zmianami pracy</h1>
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={[
+            {
+              key: 'employees',
+              label: 'Pracownicy',
+              children: (
+                <EmployeeManager
+                  employees={employees}
+                  onAddEmployee={handleAddEmployee}
+                  onDeleteEmployee={handleDeleteEmployee}
+                  currentDepartment={selectedDepartment}
+                  departments={departments}
+                />
+              ),
+            },
+            {
+              key: 'schedule-settings',
+              label: 'Ustawienia grafiku',
+              children: (
+                <ScheduleSettings
+                  departments={departments}
+                  employees={employees}
+                  onGenerateSchedule={handleGenerateSchedule}
+                  generatedSchedule={generatedSchedule}
+                  selectedDepartment={selectedDepartment}
+                  onDepartmentChange={handleDepartmentChange}
+                />
+              ),
+            },
+            {
+              key: 'schedule-table',
+              label: 'Grafik',
+              children: (
+                <ScheduleTable
+                  generatedSchedule={generatedSchedule}
+                  departments={departments}
+                  employees={employees}
+                  onCellChange={handleScheduleCellChange}
+                />
+              ),
+            },
+          ]}
+        />
+      </div>
+    </ConfigProvider>
   );
 }
 

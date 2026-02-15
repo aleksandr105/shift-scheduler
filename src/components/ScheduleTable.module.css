@@ -24,15 +24,120 @@
   width: 100%;
 }
 
- .scheduleTable th,
- .scheduleTable td {
-   border: 1px solid #ddd;
-   padding: 4px;
-   text-align: center;
-   /* Increase minimum width to accommodate full shift text without truncation */
-   min-width: 80px;
-   white-space: nowrap;
- }
+.scheduleTable th,
+.scheduleTable td {
+  border: 1px solid #ddd;
+  padding: 4px;
+  text-align: center;
+  /* Increase minimum width to accommodate full shift text without truncation */
+  min-width: 80px;
+  white-space: nowrap;
+}
+
+/* Shift cell: ensure compact time labels do not show ellipsis inside AntD Select */
+.shiftCell {
+  font-variant-numeric: tabular-nums;
+}
+
+.shiftCell :global(.ant-select-selection-item) {
+  text-overflow: clip;
+}
+
+/*
+  ScheduleSettings (Ustawienia grafiku) – AntD Table borders
+  Goal: make borders match ScheduleTable (<table>) look: 1px solid #ddd
+  Keep changes purely visual; do not affect print, since AntD table is not printed.
+*/
+.settingsTable :global(.ant-table-container) {
+  border-color: #ddd !important;
+  border-radius: 0 !important;
+}
+
+.settingsTable :global(.ant-table) {
+  border-radius: 0 !important;
+}
+
+.settingsTable :global(.ant-table-thead > tr > th),
+.settingsTable :global(.ant-table-tbody > tr > td),
+.settingsTable :global(.ant-table-tbody > tr > th) {
+  border-color: #ddd !important;
+}
+
+.settingsTable :global(.ant-table-small .ant-table-cell) {
+  padding: 4px !important;
+}
+
+/*
+  Employee header (both: ScheduleTable <table> and AntD Table in ScheduleSettings)
+  Goal: keep full name visible without widening the table (rotated text).
+
+  Implementation details:
+  - Visible text is rotated via `transform: rotate(-90deg)`.
+  - A hidden sizer in normal flow uses `writing-mode: vertical-rl` to make the header cell
+    automatically grow in height to fit the whole name (no clipping), while keeping width small.
+*/
+.employeeHeaderCell {
+  vertical-align: bottom;
+  padding: 0 !important;
+  overflow: visible;
+  /* Explicitly non-interactive header label (no pointer cursor on either page) */
+  cursor: default;
+}
+
+.employeeHeaderWrap {
+  /*
+    Use grid layering (not absolute positioning) so the header row reserves stable space
+    for employee names and never overlaps the table body.
+  */
+  display: grid;
+  justify-items: center;
+  align-items: end;
+  width: 100%;
+  /* Ensure padding does NOT change the effective width used for centering (fix header text horizontal shift) */
+  box-sizing: border-box;
+  padding: 6px 2px;
+  /* Helps AntD header cells not to clip absolutely positioned rotated text */
+  overflow: visible;
+  cursor: default;
+}
+
+.employeeHeaderSizer {
+  /* Sizing helper: affects layout height, but is not visible */
+  grid-area: 1 / 1;
+  display: block;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  white-space: nowrap;
+  line-height: 1.1;
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.employeeHeaderText {
+  /*
+    Visible label: placed in the same grid cell as the sizer.
+    This keeps it in normal layout flow (no absolute overlay) while the hidden sizer
+    reserves the header row height.
+  */
+  grid-area: 1 / 1;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  /* Shift by ~half the line-height to keep the rotated label thickness centered on the column */
+  transform: translateX(0.55em);
+  pointer-events: none;
+  user-select: none;
+  cursor: default;
+}
+
+.employeeHeaderTextInner {
+  display: inline-block;
+  transform: rotate(-90deg);
+  transform-origin: left bottom;
+  white-space: nowrap;
+  line-height: 1.1;
+}
 
 .employeeHeader {
   background-color: #f0f0f0;
@@ -57,6 +162,44 @@
 
 .dateHeader {
   background-color: #f9f9f9;
+}
+
+/* ScheduleSettings (Ustawienia grafiku) – date cell styling (AntD Table first column)
+   Requirement: weekday + day number horizontally, with neutral separation and subtle weekend highlight. */
+.settingsDateCell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  padding: 2px 8px;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  background-color: #fbfbfb;
+
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.settingsDateNumber {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.88);
+}
+
+.settingsDateWeekday {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+/* Subtle weekend highlight (Sat + Sun) */
+.settingsWeekendDateCell {
+  background-color: #fff7f7;
+  border-color: #ffe3e3;
+}
+
+.settingsWeekendDateCell .settingsDateNumber,
+.settingsWeekendDateCell .settingsDateWeekday {
+  color: rgba(140, 0, 0, 0.75);
 }
 
 .weekendHeader {
@@ -124,11 +267,21 @@
   border: 1px solid #000;
 }
 
-.boxDay { background-color: #d4edda; }
-.boxNight { background-color: #cce5ff; }
-.boxOffice { background-color: #fff3cd; }
-.boxOff { background-color: #e2e3e5; }
-.boxVacation { background-color: #f8d7da; }
+.boxDay {
+  background-color: #d4edda;
+}
+.boxNight {
+  background-color: #cce5ff;
+}
+.boxOffice {
+  background-color: #fff3cd;
+}
+.boxOff {
+  background-color: #e2e3e5;
+}
+.boxVacation {
+  background-color: #f8d7da;
+}
 
 .departmentSection {
   page-break-after: always;
@@ -149,8 +302,14 @@
   .noPrint {
     display: none;
   }
+  .tableWrapper {
+    overflow: visible;
+  }
   .scheduleTable {
     font-size: 10pt;
+  }
+  .employeeHeaderWrap {
+    padding: 4px 2px;
   }
   .departmentSection {
     page-break-after: always;
