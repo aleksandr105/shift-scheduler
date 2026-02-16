@@ -69,74 +69,49 @@
 
 /*
   Employee header (both: ScheduleTable <table> and AntD Table in ScheduleSettings)
-  Goal: keep full name visible without widening the table (rotated text).
-
-  Implementation details:
-  - Visible text is rotated via `transform: rotate(-90deg)`.
-  - A hidden sizer in normal flow uses `writing-mode: vertical-rl` to make the header cell
-    automatically grow in height to fit the whole name (no clipping), while keeping width small.
+  Goal: two-line layout (first name + last name) with fixed/stable header height
+  and no overlap with table body.
 */
 .employeeHeaderCell {
-  vertical-align: bottom;
-  padding: 0 !important;
-  overflow: visible;
-  /* Explicitly non-interactive header label (no pointer cursor on either page) */
+  vertical-align: middle;
+  padding: 4px 2px !important;
+  white-space: normal !important;
+  line-height: 1.15;
+  min-height: 56px;
+  height: 56px;
   cursor: default;
 }
 
 .employeeHeaderWrap {
-  /*
-    Use grid layering (not absolute positioning) so the header row reserves stable space
-    for employee names and never overlaps the table body.
-  */
-  display: grid;
-  justify-items: center;
-  align-items: end;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   width: 100%;
-  /* Ensure padding does NOT change the effective width used for centering (fix header text horizontal shift) */
   box-sizing: border-box;
-  padding: 6px 2px;
-  /* Helps AntD header cells not to clip absolutely positioned rotated text */
-  overflow: visible;
+  min-height: 48px;
+  padding: 2px 0;
+  overflow: hidden;
   cursor: default;
 }
 
-.employeeHeaderSizer {
-  /* Sizing helper: affects layout height, but is not visible */
-  grid-area: 1 / 1;
+.employeeHeaderFirstName,
+.employeeHeaderLastName {
   display: block;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
   line-height: 1.1;
-  visibility: hidden;
-  pointer-events: none;
-  user-select: none;
 }
 
-.employeeHeaderText {
-  /*
-    Visible label: placed in the same grid cell as the sizer.
-    This keeps it in normal layout flow (no absolute overlay) while the hidden sizer
-    reserves the header row height.
-  */
-  grid-area: 1 / 1;
-  width: 0;
-  height: 0;
-  overflow: visible;
-  /* Shift by ~half the line-height to keep the rotated label thickness centered on the column */
-  transform: translateX(0.55em);
-  pointer-events: none;
-  user-select: none;
-  cursor: default;
+.employeeHeaderFirstName {
+  font-weight: 600;
 }
 
-.employeeHeaderTextInner {
-  display: inline-block;
-  transform: rotate(-90deg);
-  transform-origin: left bottom;
-  white-space: nowrap;
-  line-height: 1.1;
+.employeeHeaderLastName {
+  font-weight: 500;
 }
 
 .employeeHeader {
@@ -308,8 +283,18 @@
   .scheduleTable {
     font-size: 10pt;
   }
+  .employeeHeaderCell {
+    min-height: 44px;
+    height: 44px;
+    padding: 2px 1px !important;
+  }
   .employeeHeaderWrap {
-    padding: 4px 2px;
+    min-height: 40px;
+    padding: 1px 0;
+  }
+  .employeeHeaderFirstName,
+  .employeeHeaderLastName {
+    font-size: 9pt;
   }
   .departmentSection {
     page-break-after: always;

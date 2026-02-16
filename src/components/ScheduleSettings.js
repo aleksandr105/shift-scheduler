@@ -234,16 +234,14 @@ const ScheduleSettings = ({
     ];
 
     filteredEmployees.forEach(emp => {
-      const fullName = [emp.firstName, emp.lastName].filter(Boolean).join(' ');
+      const firstName = emp.firstName || '';
+      const lastName = emp.lastName || '';
+      const fullName = [firstName, lastName].filter(Boolean).join(' ');
       columns.push({
         title: (
-          <div className={styles.employeeHeaderWrap} title={fullName}>
-            <span className={styles.employeeHeaderSizer} aria-hidden="true">
-              {fullName}
-            </span>
-            <span className={styles.employeeHeaderText}>
-              <span className={styles.employeeHeaderTextInner}>{fullName}</span>
-            </span>
+          <div className={styles.employeeHeaderWrap} title={fullName} data-employee-id={emp.id}>
+            <span className={styles.employeeHeaderFirstName}>{firstName}</span>
+            <span className={styles.employeeHeaderLastName}>{lastName}</span>
           </div>
         ),
         dataIndex: emp.id,

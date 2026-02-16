@@ -113,20 +113,18 @@ const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange
                   <tr>
                     <th className={styles.stickyCol}>Data</th>
                     {deptEmployees.map(emp => {
-                      const fullName = [emp.firstName, emp.lastName].filter(Boolean).join(' ');
+                      const firstName = emp.firstName || '';
+                      const lastName = emp.lastName || '';
+                      const fullName = [firstName, lastName].filter(Boolean).join(' ');
                       return (
                         <th key={emp.id} className={styles.employeeHeaderCell}>
-                          <div className={styles.employeeHeaderWrap} title={fullName}>
-                            {/*
-                              Sizer keeps the header row tall enough to avoid clipping.
-                              Visible text is rotated via transform (requirement).
-                            */}
-                            <span className={styles.employeeHeaderSizer} aria-hidden="true">
-                              {fullName}
-                            </span>
-                            <span className={styles.employeeHeaderText}>
-                              <span className={styles.employeeHeaderTextInner}>{fullName}</span>
-                            </span>
+                          <div
+                            className={styles.employeeHeaderWrap}
+                            title={fullName}
+                            data-employee-id={emp.id}
+                          >
+                            <span className={styles.employeeHeaderFirstName}>{firstName}</span>
+                            <span className={styles.employeeHeaderLastName}>{lastName}</span>
                           </div>
                         </th>
                       );
