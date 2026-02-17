@@ -1,3 +1,17 @@
+# MCP Usage Policy
+
+When a task can be performed using an available MCP server tool, ALWAYS prefer the MCP tool over
+local terminal commands.
+
+Do NOT execute git commands in the terminal if an MCP tool exists that performs the same operation
+(branch creation, commit, push, pull request, issue management, etc.).
+
+Only fall back to terminal commands if:
+
+- No suitable MCP tool exists
+- The MCP server is unavailable
+- The MCP tool explicitly fails
+
 # Ant Design (antd) Best Practices and Coding Standards
 
 This document outlines the recommended best practices for developing React applications using the

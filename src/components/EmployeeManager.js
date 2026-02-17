@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Input, Select, Checkbox, Button, Table, Space, Modal } from 'antd';
 import { loadEmployeesByDepartment, saveEmployeesByDepartment } from '../utils/localStorageHelper';
+import { firstNameMaxLengthValidator, lastNameMaxLengthValidator } from './employeeValidationRules';
 
 const { Option } = Select;
 
@@ -128,7 +129,10 @@ const EmployeeManager = ({
           <Form.Item
             name="firstName"
             label="Imię"
-            rules={[{ required: true, message: 'Proszę wpisać imię pracownika!' }]}
+            rules={[
+              { required: true, message: 'Proszę wpisać imię pracownika!' },
+              { validator: firstNameMaxLengthValidator },
+            ]}
           >
             <Input />
           </Form.Item>
@@ -136,7 +140,10 @@ const EmployeeManager = ({
           <Form.Item
             name="lastName"
             label="Nazwisko"
-            rules={[{ required: true, message: 'Proszę wpisać nazwisko pracownika!' }]}
+            rules={[
+              { required: true, message: 'Proszę wpisać nazwisko pracownika!' },
+              { validator: lastNameMaxLengthValidator },
+            ]}
           >
             <Input />
           </Form.Item>
