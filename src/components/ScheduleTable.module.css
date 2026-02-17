@@ -17,26 +17,32 @@
 
 .tableWrapper {
   overflow-x: auto;
+  width: 100%;
 }
 
 .scheduleTable {
   border-collapse: collapse;
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
 }
 
 .scheduleTable th,
 .scheduleTable td {
   border: 1px solid #ddd;
-  padding: 4px;
+  padding: 2px;
   text-align: center;
-  /* Increase minimum width to accommodate full shift text without truncation */
-  min-width: 80px;
+  min-width: 52px;
   white-space: nowrap;
 }
 
 /* Shift cell: ensure compact time labels do not show ellipsis inside AntD Select */
 .shiftCell {
   font-variant-numeric: tabular-nums;
+  min-width: 52px;
+}
+
+.shiftCell :global(.ant-select) {
+  width: 100% !important;
 }
 
 .shiftCell :global(.ant-select-selection-item) {
@@ -61,10 +67,12 @@
 .settingsTable :global(.ant-table-tbody > tr > td),
 .settingsTable :global(.ant-table-tbody > tr > th) {
   border-color: #ddd !important;
+  text-align:center;
+  font-weight:600;
 }
 
 .settingsTable :global(.ant-table-small .ant-table-cell) {
-  padding: 4px !important;
+  padding: 2px !important;
 }
 
 /*
@@ -73,37 +81,48 @@
   and no overlap with table body.
 */
 .employeeHeaderCell {
-  vertical-align: middle;
-  padding: 4px 2px !important;
+  position: relative;
+  vertical-align: bottom;
+  padding: 0 !important;
   white-space: normal !important;
-  line-height: 1.15;
-  min-height: 56px;
-  height: 56px;
+  line-height: 1.05;
+  min-width: 52px;
+  width: 52px;
+  min-height: 126px;
+  height: 126px;
   cursor: default;
 }
 
 .employeeHeaderWrap {
-  display: flex;
+  position: absolute;
+  left: 45px;
+  bottom: 6px;
+
+  display: inline-flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  width: 100%;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 1px;
+
   box-sizing: border-box;
-  min-height: 48px;
-  padding: 2px 0;
-  overflow: hidden;
+  max-width: 118px;
+  padding: 0;
+
+  transform: rotate(-90deg);
+  transform-origin: left bottom;
+
   cursor: default;
 }
 
 .employeeHeaderFirstName,
 .employeeHeaderLastName {
   display: block;
-  max-width: 100%;
+  max-width: 116px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  line-height: 1.1;
+  text-align: left;
+  line-height: 1.05;
 }
 
 .employeeHeaderFirstName {
@@ -132,7 +151,9 @@
   background-color: #fafafa;
   position: sticky;
   left: 0;
-  z-index: 1;
+  z-index: 2;
+  min-width: 72px !important;
+  width: 72px;
 }
 
 .dateHeader {
@@ -175,6 +196,10 @@
 .settingsWeekendDateCell .settingsDateNumber,
 .settingsWeekendDateCell .settingsDateWeekday {
   color: rgba(140, 0, 0, 0.75);
+}
+
+.weekendShiftCell {
+  background-image: linear-gradient(rgba(255, 233, 233, 0.5), rgba(255, 233, 233, 0.5));
 }
 
 .weekendHeader {
@@ -284,17 +309,22 @@
     font-size: 10pt;
   }
   .employeeHeaderCell {
-    min-height: 44px;
-    height: 44px;
-    padding: 2px 1px !important;
+    min-width: 42px;
+    width: 42px;
+    min-height: 100px;
+    height: 100px;
+    padding: 0 !important;
   }
   .employeeHeaderWrap {
-    min-height: 40px;
-    padding: 1px 0;
+    left: 3px;
+    bottom: 4px;
+    max-width: 94px;
+    padding: 0;
   }
   .employeeHeaderFirstName,
   .employeeHeaderLastName {
     font-size: 9pt;
+    max-width: 92px;
   }
   .departmentSection {
     page-break-after: always;
