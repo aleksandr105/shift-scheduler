@@ -5,6 +5,7 @@ import plPL from 'antd/locale/pl_PL';
 import EmployeeManager from './components/EmployeeManager';
 import ScheduleSettings from './components/ScheduleSettings';
 import ScheduleTable from './components/ScheduleTable';
+import Logo from './components/Logo';
 import { loadEmployeesByDepartment, saveEmployeesByDepartment } from './utils/localStorageHelper';
 import './App.css';
 
@@ -127,7 +128,18 @@ function App() {
   return (
     <ConfigProvider locale={plPL}>
       <div className="App">
-        <h1>System zarządzania zmianami pracy</h1>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '20px',
+            marginBottom: '30px',
+          }}
+        >
+          <Logo width={80} />
+          <h1 style={{ margin: 0 }}>System zarządzania zmianami pracy</h1>
+        </div>
         <Tabs
           activeKey={activeTab}
           onChange={setActiveTab}
