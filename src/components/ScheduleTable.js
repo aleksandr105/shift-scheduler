@@ -68,6 +68,16 @@ const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange
     }
   };
 
+  // Keep compatibility with existing employee flags/data shape.
+  const hasSaturdayRestriction = employee => {
+    if (!employee) return false;
+    if (employee.doesNotWorkOnSaturdays === true) return true;
+    if (employee.noSaturdays === true) return true;
+    return (
+      Array.isArray(employee.constraints) && employee.constraints.includes('Nie pracuje w soboty')
+    );
+  };
+
   // Return default shift for a given day and employee.
   // According to requirements, "0" (off) is automatically applied only when the employee
   // has the flag `doesNotWorkOnSaturdays` **and** the day is Friday (5) or Saturday (6).
@@ -75,7 +85,7 @@ const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange
   const getDefaultShift = (day, employee) => {
     const d = new Date(year, month, day);
     const dow = d.getDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
-    if (employee.doesNotWorkOnSaturdays && (dow === 5 || dow === 6)) {
+    if (hasSaturdayRestriction(employee) && (dow === 5 || dow === 6)) {
       return '0';
     }
     return '';
@@ -138,7 +148,7 @@ const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange
                     const weekdayNames = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb'];
                     const isWeekend = dow === 0 || dow === 6;
                     return (
-                      <tr key={day}>
+                      <tr key={day} className={isWeekend ? styles.weekendRow : ''}>
                         <td className={styles.stickyCol}>
                           <div
                             className={
@@ -161,15 +171,16 @@ const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange
                               onCellChange(emp.id, day - 1, val);
                             }
                           };
+                          const shiftClass = getShiftClass(value);
                           return (
                             <td
                               key={emp.id}
-                              className={`${styles.shiftCell} ${getShiftClass(value)}`}
+                              className={`${styles.shiftCell} ${isWeekend ? styles.weekendShiftCell : ''} ${shiftClass}`}
                             >
                               <Select
                                 value={value}
                                 onChange={handleChange}
-                                style={{ width: '100px' }}
+                                style={{ width: '100%' }}
                                 size="small"
                               >
                                 <Select.Option value=""> </Select.Option>

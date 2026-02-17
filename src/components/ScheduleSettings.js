@@ -23,6 +23,16 @@ const ScheduleSettings = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Keep compatibility with existing employee flags/data shape.
+  const hasSaturdayRestriction = employee => {
+    if (!employee) return false;
+    if (employee.doesNotWorkOnSaturdays === true) return true;
+    if (employee.noSaturdays === true) return true;
+    return (
+      Array.isArray(employee.constraints) && employee.constraints.includes('Nie pracuje w soboty')
+    );
+  };
+
   // Обновляем ограничения при изменении сотрудников или выбранного отдела
   // Инициализация и обновление ограничений (manualConstraints) при изменении месяца, года или отдела.
   // Кроме того, автоматически проставляем "0" в пятницы и субботы для сотрудников, у которых установлен флаг
@@ -48,7 +58,7 @@ const ScheduleSettings = ({
 
       // Автоматическое заполнение 0 для пятницы (5) и субботы (6), если сотрудник не работает по субботам.
       // Заполняем только если пользователь ещё не задал значение, позволяя переопределить вручную.
-      if (employee.doesNotWorkOnSaturdays) {
+      if (hasSaturdayRestriction(employee)) {
         for (let dayIdx = 0; dayIdx < daysInMonth; dayIdx++) {
           const date = new Date(year, month, dayIdx + 1);
           const dow = date.getDay(); // 0=Sun, 5=Fri, 6=Sat
@@ -115,7 +125,7 @@ const ScheduleSettings = ({
   const getDefaultShift = (day, employee) => {
     const d = new Date(year, month, day);
     const dow = d.getDay(); // 0=Sun, 5=Fri, 6=Sat
-    if (employee.doesNotWorkOnSaturdays && (dow === 5 || dow === 6)) {
+    if (hasSaturdayRestriction(employee) && (dow === 5 || dow === 6)) {
       return '0';
     }
     return '';
@@ -165,6 +175,9 @@ const ScheduleSettings = ({
     const rows = [];
     for (let dayIdx = 0; dayIdx < daysInMonth; dayIdx++) {
       const row = { key: dayIdx };
+      const date = new Date(year, month, dayIdx + 1);
+      const dow = date.getDay();
+      const isWeekend = dow === 0 || dow === 6;
       // Add a readable label for the first column (will be rendered via column render)
       row.date = dayIdx + 1;
       filteredEmployees.forEach(emp => {
@@ -177,7 +190,7 @@ const ScheduleSettings = ({
           <Select
             value={value}
             onChange={val => handleConstraintChange(emp.id, dayIdx, val)}
-            style={{ width: '60px' }}
+            style={{ width: '100%' }}
             size="small"
           >
             <Option value=""> </Option>
@@ -187,7 +200,13 @@ const ScheduleSettings = ({
         );
         // `shiftCell` is UI-only: ensures no ellipsis for shift labels inside Select.
         // No business logic changes.
-        row[emp.id] = <div className={`${styles.shiftCell} ${getShiftClass(value)}`}>{select}</div>;
+        row[emp.id] = (
+          <div
+            className={`${styles.shiftCell} ${isWeekend ? styles.weekendShiftCell : ''} ${getShiftClass(value)}`}
+          >
+            {select}
+          </div>
+        );
       });
       rows.push(row);
     }
@@ -210,7 +229,7 @@ const ScheduleSettings = ({
         dataIndex: 'date',
         key: 'date',
         fixed: 'left',
-        width: 80,
+        width: 72,
         render: (text, record) => {
           const date = new Date(year, month, record.date);
           const dow = date.getDay();
@@ -246,7 +265,7 @@ const ScheduleSettings = ({
         ),
         dataIndex: emp.id,
         key: emp.id,
-        width: 80,
+        width: 52,
         align: 'center',
         onHeaderCell: () => ({ className: styles.employeeHeaderCell }),
       });
