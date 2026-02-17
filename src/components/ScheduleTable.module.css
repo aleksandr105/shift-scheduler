@@ -67,6 +67,8 @@
 .settingsTable :global(.ant-table-tbody > tr > td),
 .settingsTable :global(.ant-table-tbody > tr > th) {
   border-color: #ddd !important;
+  text-align:center;
+  font-weight:600;
 }
 
 .settingsTable :global(.ant-table-small .ant-table-cell) {
@@ -93,7 +95,7 @@
 
 .employeeHeaderWrap {
   position: absolute;
-  left: 4px;
+  left: 45px;
   bottom: 6px;
 
   display: inline-flex;
