@@ -22,6 +22,8 @@ const ScheduleSettings = ({
   const [year, setYear] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [dayShiftRequired, setDayShiftRequired] = useState(null);
+  const [nightShiftRequired, setNightShiftRequired] = useState(null);
 
   // Keep compatibility with existing employee flags/data shape.
   const hasSaturdayRestriction = employee => {
@@ -135,8 +137,24 @@ const ScheduleSettings = ({
   // Fixed filtering: employees store department name in `department`, while
   // `selectedDepartment` holds the department id. Resolve the name first.
   const handleGenerate = async () => {
-    if (!selectedMonthYear || !selectedDepartment) {
-      setError('Wybierz miesiąc i dział');
+    if (!selectedMonthYear || !selectedDepartment || !dayShiftRequired || !nightShiftRequired) {
+      setError('Wybierz miesiąc, dział oraz wymagania zmian (dzienna i nocna)');
+      return;
+    }
+
+    const parsedDayShiftRequired = Number(dayShiftRequired);
+    const parsedNightShiftRequired = Number(nightShiftRequired);
+    const isDayShiftValid =
+      Number.isInteger(parsedDayShiftRequired) &&
+      parsedDayShiftRequired >= 1 &&
+      parsedDayShiftRequired <= 5;
+    const isNightShiftValid =
+      Number.isInteger(parsedNightShiftRequired) &&
+      parsedNightShiftRequired >= 1 &&
+      parsedNightShiftRequired <= 5;
+
+    if (!isDayShiftValid || !isNightShiftValid) {
+      setError('Wymagana liczba pracowników na zmianie musi być w zakresie 1–5');
       return;
     }
 
@@ -151,7 +169,14 @@ const ScheduleSettings = ({
       }
       const filteredEmployees = employees.filter(emp => emp.department === deptName);
 
-      const result = await generateSchedule(filteredEmployees, month, year, manualConstraints);
+      const result = await generateSchedule(
+        filteredEmployees,
+        month,
+        year,
+        manualConstraints,
+        parsedDayShiftRequired,
+        parsedNightShiftRequired
+      );
       onGenerateSchedule(result);
     } catch (err) {
       setError(err.message);
@@ -303,11 +328,41 @@ const ScheduleSettings = ({
             ))}
           </Select>
 
+          <Select
+            placeholder="Dzienna zmiana: liczba osób"
+            value={dayShiftRequired}
+            onChange={value => setDayShiftRequired(value)}
+            style={{ minWidth: 220 }}
+            allowClear
+          >
+            {[1, 2, 3, 4, 5].map(value => (
+              <Option key={`day-${value}`} value={value}>
+                {value}
+              </Option>
+            ))}
+          </Select>
+
+          <Select
+            placeholder="Nocna zmiana: liczba osób"
+            value={nightShiftRequired}
+            onChange={value => setNightShiftRequired(value)}
+            style={{ minWidth: 220 }}
+            allowClear
+          >
+            {[1, 2, 3, 4, 5].map(value => (
+              <Option key={`night-${value}`} value={value}>
+                {value}
+              </Option>
+            ))}
+          </Select>
+
           <Button
             type="primary"
             onClick={handleGenerate}
             loading={loading}
-            disabled={!selectedMonthYear || !selectedDepartment}
+            disabled={
+              !selectedMonthYear || !selectedDepartment || !dayShiftRequired || !nightShiftRequired
+            }
           >
             Generuj grafik
           </Button>

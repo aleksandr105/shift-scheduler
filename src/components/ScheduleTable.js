@@ -13,7 +13,21 @@ const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange
     );
   }
 
-  const { schedule, month, year } = generatedSchedule || {};
+  const { schedule, month, year, dayShiftRequired, nightShiftRequired } = generatedSchedule || {};
+  const parsedDayShiftRequired = Number(dayShiftRequired);
+  const parsedNightShiftRequired = Number(nightShiftRequired);
+  const displayDayShiftRequired =
+    Number.isInteger(parsedDayShiftRequired) &&
+    parsedDayShiftRequired >= 1 &&
+    parsedDayShiftRequired <= 5
+      ? parsedDayShiftRequired
+      : 1;
+  const displayNightShiftRequired =
+    Number.isInteger(parsedNightShiftRequired) &&
+    parsedNightShiftRequired >= 1 &&
+    parsedNightShiftRequired <= 5
+      ? parsedNightShiftRequired
+      : 1;
 
   // Render exactly one schedule: the last generated one.
   // `generatedSchedule` is generated for a single department, but the UI previously
@@ -117,6 +131,9 @@ const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange
             <h2 className={styles.tableTitle}>
               Grafik – {deptName} – {monthName} {year}
             </h2>
+            <div style={{ marginBottom: 12 }}>
+              Wymagania zmian: dzienna {displayDayShiftRequired}, nocna {displayNightShiftRequired}
+            </div>
             <div className={styles.tableWrapper}>
               <table className={styles.scheduleTable}>
                 <thead>

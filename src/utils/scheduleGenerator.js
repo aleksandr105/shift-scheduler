@@ -4,9 +4,31 @@
  * @param {number} month - Месяц (0-11)
  * @param {number} year - Год
  * @param {Object} manualConstraints - Ручные ограничения (ключ - ID сотрудника, значение - массив ограничений по дням)
+ * @param {number} dayShiftRequired - Требуемое количество сотрудников на дневную смену (1-5)
+ * @param {number} nightShiftRequired - Требуемое количество сотрудников на ночную смену (1-5)
  * @returns {Object} Объект графика или ошибку
  */
-export const generateSchedule = (employees, month, year, manualConstraints = {}) => {
+export const generateSchedule = (
+  employees,
+  month,
+  year,
+  manualConstraints = {},
+  dayShiftRequired = 1,
+  nightShiftRequired = 1
+) => {
+  const normalizedDayShiftRequired =
+    Number.isInteger(Number(dayShiftRequired)) &&
+    Number(dayShiftRequired) >= 1 &&
+    Number(dayShiftRequired) <= 5
+      ? Number(dayShiftRequired)
+      : 1;
+  const normalizedNightShiftRequired =
+    Number.isInteger(Number(nightShiftRequired)) &&
+    Number(nightShiftRequired) >= 1 &&
+    Number(nightShiftRequired) <= 5
+      ? Number(nightShiftRequired)
+      : 1;
+
   // Получаем количество дней в месяце
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
@@ -73,9 +95,9 @@ export const generateSchedule = (employees, month, year, manualConstraints = {})
   });
 
   // Подсчитываем количество требуемых смен для каждого дня.
-  // Для небольших команд достаточно одного сотрудника на каждую смену (дневную и ночную).
-  const morningShiftsNeeded = Array(daysInMonth).fill(1); // 7-19
-  const eveningShiftsNeeded = Array(daysInMonth).fill(1); // 19-7
+  // По умолчанию (обратная совместимость) используется 1 сотрудник на каждую смену.
+  const morningShiftsNeeded = Array(daysInMonth).fill(normalizedDayShiftRequired); // 7-19
+  const eveningShiftsNeeded = Array(daysInMonth).fill(normalizedNightShiftRequired); // 19-7
 
   // Проверяем, достаточно ли сотрудников для покрытия всех смен
   const totalNeededMorning = morningShiftsNeeded.reduce((sum, needed) => sum + needed, 0);
@@ -198,5 +220,7 @@ export const generateSchedule = (employees, month, year, manualConstraints = {})
     daysInMonth,
     month,
     year,
+    dayShiftRequired: normalizedDayShiftRequired,
+    nightShiftRequired: normalizedNightShiftRequired,
   };
 };

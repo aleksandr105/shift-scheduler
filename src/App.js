@@ -98,6 +98,8 @@ function App() {
       ...scheduleData,
       departmentId: selectedDepartment ?? null,
       departmentName: deptObj ? deptObj.name : null,
+      dayShiftRequired: scheduleData?.dayShiftRequired ?? 1,
+      nightShiftRequired: scheduleData?.nightShiftRequired ?? 1,
     };
 
     setGeneratedSchedule(schedulePayload);
