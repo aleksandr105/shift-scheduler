@@ -11,6 +11,20 @@
   margin-bottom: 16px;
 }
 
+.scheduleControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.noData {
+  padding: 16px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
 .printButton {
   margin-top: 16px;
 }

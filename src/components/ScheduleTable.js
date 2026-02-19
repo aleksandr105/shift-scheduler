@@ -4,16 +4,21 @@ import styles from './ScheduleTable.module.css';
 import { formatShiftCompact } from '../utils/formatShiftCompact';
 
 // `onCellChange` is a callback to update a specific cell in the generated schedule.
-const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange }) => {
-  if (!generatedSchedule) {
-    return (
-      <div className={styles.noData}>
-        Brak wygenerowanego grafiku. Przejdź do "Ustawienia grafiku", aby go stworzyć.
-      </div>
-    );
-  }
+const ScheduleTable = ({
+  generatedSchedule,
+  departments,
+  employees,
+  onCellChange,
+  selectedDepartment,
+  onDepartmentChange,
+}) => {
+  const selectedDepartmentObj = departments.find(
+    dept => String(dept.id) === String(selectedDepartment)
+  );
+  const departmentNameToRender = selectedDepartmentObj?.name || null;
 
-  const { schedule, month, year, dayShiftRequired, nightShiftRequired } = generatedSchedule || {};
+  const scheduleData = generatedSchedule || null;
+  const { schedule, month, year, dayShiftRequired, nightShiftRequired } = scheduleData || {};
   const parsedDayShiftRequired = Number(dayShiftRequired);
   const parsedNightShiftRequired = Number(nightShiftRequired);
   const displayDayShiftRequired =
@@ -29,27 +34,6 @@ const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange
       ? parsedNightShiftRequired
       : 1;
 
-  // Render exactly one schedule: the last generated one.
-  // `generatedSchedule` is generated for a single department, but the UI previously
-  // rendered tables for *all* departments, producing an extra empty/old table.
-  const resolveDepartmentToRender = () => {
-    if (generatedSchedule.departmentName) return generatedSchedule.departmentName;
-
-    // Backward compatibility for older saved schedules that don't have department metadata.
-    // Infer the department from employee ids present in `schedule`.
-    if (schedule && typeof schedule === 'object') {
-      const employeeIdsWithSchedule = new Set(Object.keys(schedule));
-      const matchingEmployees = employees.filter(emp =>
-        employeeIdsWithSchedule.has(String(emp.id))
-      );
-      const deptName = matchingEmployees.find(Boolean)?.department;
-      if (deptName) return deptName;
-    }
-
-    return null;
-  };
-
-  const departmentNameToRender = resolveDepartmentToRender();
   const monthNames = [
     'Styczeń',
     'Luty',
@@ -111,133 +95,152 @@ const ScheduleTable = ({ generatedSchedule, departments, employees, onCellChange
       : 0;
   const dates = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
+  const deptEmployees = departmentNameToRender
+    ? employees.filter(emp => emp.department === departmentNameToRender)
+    : [];
+
+  const hasScheduleForDepartment = Boolean(scheduleData && departmentNameToRender);
+  const hasEmployeesInDepartment = deptEmployees.length > 0;
+  const canRenderScheduleTable = hasScheduleForDepartment && hasEmployeesInDepartment;
+  const noDataMessage = hasScheduleForDepartment
+    ? 'Для этого отдела нет сотрудников.'
+    : 'Grafik nie został jeszcze wygenerowany.';
+
   return (
     <div className={styles.printContainer}>
-      <div className={styles.noPrint}>
-        <Button type="primary" onClick={() => window.print()} style={{ marginBottom: 16 }}>
+      <div className={`${styles.noPrint} ${styles.scheduleControls}`}>
+        <Select
+          placeholder="Wybierz dział"
+          value={selectedDepartment}
+          onChange={onDepartmentChange}
+          style={{ minWidth: 220 }}
+          allowClear
+        >
+          {departments.map(dept => (
+            <Select.Option key={dept.id} value={dept.id}>
+              {dept.name}
+            </Select.Option>
+          ))}
+        </Select>
+
+        <Button type="primary" onClick={() => window.print()} disabled={!canRenderScheduleTable}>
           Drukuj
         </Button>
       </div>
 
-      {(() => {
-        const deptName = departmentNameToRender;
-        if (!deptName) return null;
-
-        const deptEmployees = employees.filter(emp => emp.department === deptName);
-        if (deptEmployees.length === 0) return null;
-
-        return (
-          <div className={styles.departmentSection}>
-            <h2 className={styles.tableTitle}>
-              Grafik – {deptName} – {monthName} {year}
-            </h2>
-            <div style={{ marginBottom: 12 }}>
-              Wymagania zmian: dzienna {displayDayShiftRequired}, nocna {displayNightShiftRequired}
-            </div>
-            <div className={styles.tableWrapper}>
-              <table className={styles.scheduleTable}>
-                <thead>
-                  <tr>
-                    <th className={styles.stickyCol}>Data</th>
-                    {deptEmployees.map(emp => {
-                      const firstName = emp.firstName || '';
-                      const lastName = emp.lastName || '';
-                      const fullName = [firstName, lastName].filter(Boolean).join(' ');
-                      return (
-                        <th key={emp.id} className={styles.employeeHeaderCell}>
-                          <div
-                            className={styles.employeeHeaderWrap}
-                            title={fullName}
-                            data-employee-id={emp.id}
-                          >
-                            <span className={styles.employeeHeaderFirstName}>{firstName}</span>
-                            <span className={styles.employeeHeaderLastName}>{lastName}</span>
-                          </div>
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody>
-                  {dates.map(day => {
-                    const dateObj = new Date(year, month, day);
-                    const dow = dateObj.getDay();
-                    const weekdayNames = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb'];
-                    const isWeekend = dow === 0 || dow === 6;
+      {!canRenderScheduleTable ? (
+        <div className={styles.noData}>{noDataMessage}</div>
+      ) : (
+        <div className={styles.departmentSection}>
+          <h2 className={styles.tableTitle}>
+            Grafik – {departmentNameToRender} – {monthName} {year}
+          </h2>
+          <div style={{ marginBottom: 12 }}>
+            Wymagania zmian: dzienna {displayDayShiftRequired}, nocna {displayNightShiftRequired}
+          </div>
+          <div className={styles.tableWrapper}>
+            <table className={styles.scheduleTable}>
+              <thead>
+                <tr>
+                  <th className={styles.stickyCol}>Data</th>
+                  {deptEmployees.map(emp => {
+                    const firstName = emp.firstName || '';
+                    const lastName = emp.lastName || '';
+                    const fullName = [firstName, lastName].filter(Boolean).join(' ');
                     return (
-                      <tr key={day} className={isWeekend ? styles.weekendRow : ''}>
-                        <td className={styles.stickyCol}>
-                          <div
-                            className={
-                              isWeekend
-                                ? `${styles.settingsDateCell} ${styles.settingsWeekendDateCell}`
-                                : styles.settingsDateCell
-                            }
-                          >
-                            <span className={styles.settingsDateNumber}>{day}</span>
-                            <span className={styles.settingsDateWeekday}>{weekdayNames[dow]}</span>
-                          </div>
-                        </td>
-                        {deptEmployees.map(emp => {
-                          const currentShift =
-                            schedule && schedule[emp.id] ? schedule[emp.id][day - 1] : '';
-                          const defaultShift = getDefaultShift(day, emp);
-                          const value = currentShift || defaultShift;
-                          const handleChange = val => {
-                            if (onCellChange) {
-                              onCellChange(emp.id, day - 1, val);
-                            }
-                          };
-                          const shiftClass = getShiftClass(value);
-                          return (
-                            <td
-                              key={emp.id}
-                              className={`${styles.shiftCell} ${isWeekend ? styles.weekendShiftCell : ''} ${shiftClass}`}
-                            >
-                              <Select
-                                value={value}
-                                onChange={handleChange}
-                                style={{ width: '100%' }}
-                                size="small"
-                              >
-                                <Select.Option value=""> </Select.Option>
-                                <Select.Option value="0">0</Select.Option>
-                                <Select.Option value="U">U</Select.Option>
-                                <Select.Option value="7-19">
-                                  {formatShiftCompact('7-19')}
-                                </Select.Option>
-                                <Select.Option value="19-7">
-                                  {formatShiftCompact('19-7')}
-                                </Select.Option>
-                              </Select>
-                            </td>
-                          );
-                        })}
-                      </tr>
+                      <th key={emp.id} className={styles.employeeHeaderCell}>
+                        <div
+                          className={styles.employeeHeaderWrap}
+                          title={fullName}
+                          data-employee-id={emp.id}
+                        >
+                          <span className={styles.employeeHeaderFirstName}>{firstName}</span>
+                          <span className={styles.employeeHeaderLastName}>{lastName}</span>
+                        </div>
+                      </th>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
-
-            <div className={styles.legend}>
-              <div className={styles.legendItem}>
-                <span className={styles.boxDay}></span> {formatShiftCompact('7-19')} (Dzienny)
-              </div>
-              <div className={styles.legendItem}>
-                <span className={styles.boxNight}></span> {formatShiftCompact('19-7')} (Nocny)
-              </div>
-              <div className={styles.legendItem}>
-                <span className={styles.boxOff}></span> 0 (Wolne)
-              </div>
-              <div className={styles.legendItem}>
-                <span className={styles.boxVacation}></span> U (Urlop)
-              </div>
-            </div>
-            <div className={styles.pageBreak}></div>
+                </tr>
+              </thead>
+              <tbody>
+                {dates.map(day => {
+                  const dateObj = new Date(year, month, day);
+                  const dow = dateObj.getDay();
+                  const weekdayNames = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb'];
+                  const isWeekend = dow === 0 || dow === 6;
+                  return (
+                    <tr key={day} className={isWeekend ? styles.weekendRow : ''}>
+                      <td className={styles.stickyCol}>
+                        <div
+                          className={
+                            isWeekend
+                              ? `${styles.settingsDateCell} ${styles.settingsWeekendDateCell}`
+                              : styles.settingsDateCell
+                          }
+                        >
+                          <span className={styles.settingsDateNumber}>{day}</span>
+                          <span className={styles.settingsDateWeekday}>{weekdayNames[dow]}</span>
+                        </div>
+                      </td>
+                      {deptEmployees.map(emp => {
+                        const currentShift =
+                          schedule && schedule[emp.id] ? schedule[emp.id][day - 1] : '';
+                        const defaultShift = getDefaultShift(day, emp);
+                        const value = currentShift || defaultShift;
+                        const handleChange = val => {
+                          if (onCellChange) {
+                            onCellChange(emp.id, day - 1, val);
+                          }
+                        };
+                        const shiftClass = getShiftClass(value);
+                        return (
+                          <td
+                            key={emp.id}
+                            className={`${styles.shiftCell} ${isWeekend ? styles.weekendShiftCell : ''} ${shiftClass}`}
+                          >
+                            <Select
+                              value={value}
+                              onChange={handleChange}
+                              style={{ width: '100%' }}
+                              size="small"
+                            >
+                              <Select.Option value=""> </Select.Option>
+                              <Select.Option value="0">0</Select.Option>
+                              <Select.Option value="U">U</Select.Option>
+                              <Select.Option value="7-19">
+                                {formatShiftCompact('7-19')}
+                              </Select.Option>
+                              <Select.Option value="19-7">
+                                {formatShiftCompact('19-7')}
+                              </Select.Option>
+                            </Select>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        );
-      })()}
+
+          <div className={styles.legend}>
+            <div className={styles.legendItem}>
+              <span className={styles.boxDay}></span> {formatShiftCompact('7-19')} (Dzienny)
+            </div>
+            <div className={styles.legendItem}>
+              <span className={styles.boxNight}></span> {formatShiftCompact('19-7')} (Nocny)
+            </div>
+            <div className={styles.legendItem}>
+              <span className={styles.boxOff}></span> 0 (Wolne)
+            </div>
+            <div className={styles.legendItem}>
+              <span className={styles.boxVacation}></span> U (Urlop)
+            </div>
+          </div>
+          <div className={styles.pageBreak}></div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,56 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Input, Select, Checkbox, Button, Table, Space, Modal } from 'antd';
-import { loadEmployeesByDepartment, saveEmployeesByDepartment } from '../utils/localStorageHelper';
 import { firstNameMaxLengthValidator, lastNameMaxLengthValidator } from './employeeValidationRules';
 
 const { Option } = Select;
 
-const EmployeeManager = ({
-  employees,
-  onAddEmployee,
-  onDeleteEmployee,
-  currentDepartment,
-  departments,
-}) => {
+const EmployeeManager = ({ employees, onAddEmployee, onDeleteEmployee, departments }) => {
   const [form] = Form.useForm();
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [departmentEmployees, setDepartmentEmployees] = useState([]);
 
-  // Convert department ID to department name if currentDepartment is an ID
-  const getDepartmentNameById = deptId => {
-    if (!departments || !Array.isArray(departments)) return null;
-    const dept = departments.find(d => d.id === deptId);
-    return dept ? dept.name : null;
-  };
-
-  // Get the actual department name based on the currentDepartment ID
-  const currentDepartmentName = currentDepartment ? getDepartmentNameById(currentDepartment) : null;
-
-  // Загрузка сотрудников для текущего отдела при монтировании компонента
-  useEffect(() => {
-    if (currentDepartmentName) {
-      const loadedEmployees = loadEmployeesByDepartment(currentDepartmentName);
-      setDepartmentEmployees(loadedEmployees);
-    }
-  }, [currentDepartmentName]);
-
-  // Сохранение сотрудников для текущего отдела при их изменении
-  useEffect(() => {
-    if (currentDepartmentName) {
-      saveEmployeesByDepartment(currentDepartmentName, departmentEmployees);
-    }
-  }, [departmentEmployees, currentDepartmentName]);
-
   // Синхронизация с родительским компонентом
   useEffect(() => {
-    if (currentDepartmentName) {
-      const departmentEmps = employees.filter(emp => emp.department === currentDepartmentName);
-      setDepartmentEmployees(departmentEmps);
-    } else {
-      // If no specific department is selected, show all employees
-      setDepartmentEmployees(employees);
-    }
-  }, [employees, currentDepartmentName]);
+    setDepartmentEmployees(employees);
+  }, [employees]);
 
   const onFinish = values => {
     const newEmployee = {
@@ -58,11 +20,6 @@ const EmployeeManager = ({
       ...values,
     };
     onAddEmployee(newEmployee);
-    // Добавляем сотрудника в локальное состояние для текущего отдела
-    if (currentDepartmentName && newEmployee.department === currentDepartmentName) {
-      // Добавляем нового сотрудника в начало списка, чтобы он отображался первым
-      setDepartmentEmployees(prev => [newEmployee, ...prev]);
-    }
     form.resetFields();
   };
 
@@ -74,10 +31,7 @@ const EmployeeManager = ({
       cancelText: 'Anuluj',
       onOk: () => {
         onDeleteEmployee(employeeId);
-        // Удаляем сотрудника из локального состояния для текущего отдела
-        if (currentDepartmentName) {
-          setDepartmentEmployees(prev => prev.filter(emp => emp.id !== employeeId));
-        }
+        setDepartmentEmployees(prev => prev.filter(emp => emp.id !== employeeId));
       },
     });
   };

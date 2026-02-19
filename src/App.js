@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Tabs, ConfigProvider } from 'antd';
 // Updated import for Ant Design Polish locale (compatible with current AntD version).
 import plPL from 'antd/locale/pl_PL';
@@ -6,10 +6,18 @@ import EmployeeManager from './components/EmployeeManager';
 import ScheduleSettings from './components/ScheduleSettings';
 import ScheduleTable from './components/ScheduleTable';
 import Logo from './components/Logo';
-import { loadEmployeesByDepartment, saveEmployeesByDepartment } from './utils/localStorageHelper';
+import {
+  loadEmployeesByDepartment,
+  saveEmployeesByDepartment,
+  migrateLegacySchedules,
+  getScheduleByDepartment,
+  upsertScheduleByDepartment,
+} from './utils/localStorageHelper';
 import './App.css';
 
 // `Tabs` from Ant Design now supports the `items` prop, so we no longer need the legacy `TabPane` component.
+
+const DEFAULT_DEPARTMENT_NAMES = ['Stacja', 'Wild Bean Cafe'];
 
 function App() {
   const [employees, setEmployees] = useState([]);
@@ -18,63 +26,145 @@ function App() {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [activeTab, setActiveTab] = useState('employees');
   const [initialLoadCompleted, setInitialLoadCompleted] = useState(false);
+  const [scheduleDepartmentId, setScheduleDepartmentId] = useState(null);
+  const isScheduleBootstrapCompletedRef = useRef(false);
+
+  const buildDepartmentId = departmentName => {
+    if (!departmentName || typeof departmentName !== 'string') {
+      return null;
+    }
+
+    const trimmedName = departmentName.trim();
+    if (!trimmedName) {
+      return null;
+    }
+
+    return trimmedName.toLowerCase().replace(/\s+/g, '-');
+  };
+
+  const collectDepartmentNames = employeesList => {
+    return [
+      ...new Set([
+        ...DEFAULT_DEPARTMENT_NAMES,
+        ...employeesList
+          .map(employee => employee.department)
+          .filter(departmentName => departmentName && departmentName.trim() !== ''),
+      ]),
+    ];
+  };
+
+  const normalizeDepartmentId = departmentId => {
+    if (departmentId === null || departmentId === undefined || departmentId === '') {
+      return null;
+    }
+
+    const matchedDepartment = departments.find(dept => String(dept.id) === String(departmentId));
+    return matchedDepartment ? matchedDepartment.id : departmentId;
+  };
 
   // Загрузка сотрудников при монтировании компонента
   useEffect(() => {
     // Load employees from department-specific storage and combine them
-    const stacjaEmployees = loadEmployeesByDepartment('Stacja');
-    const wildBeanCafeEmployees = loadEmployeesByDepartment('Wild Bean Cafe');
+    const departmentNamesToLoad = collectDepartmentNames([]);
+    const allEmployees = departmentNamesToLoad.flatMap(departmentName =>
+      loadEmployeesByDepartment(departmentName)
+    );
 
-    // Combine all employees from all departments
-    const allEmployees = [...stacjaEmployees, ...wildBeanCafeEmployees];
+    // Remove accidental duplicates by employee id while preserving order
+    const deduplicatedEmployees = Array.from(
+      new Map(allEmployees.map(employee => [String(employee.id), employee])).values()
+    );
 
-    setEmployees(allEmployees);
+    setEmployees(deduplicatedEmployees);
     // Mark that initial load is completed to prevent overwriting saved data
     setInitialLoadCompleted(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Обновление списка отделов при изменении сотрудников
   useEffect(() => {
-    // Define all possible departments statically
-    const allPossibleDepartments = ['Stacja', 'Wild Bean Cafe'];
-    const uniqueDepartments = [
-      ...new Set([...allPossibleDepartments, ...employees.map(emp => emp.department)]),
-    ];
-    const departmentObjects = uniqueDepartments
-      .filter(dept => dept && dept.trim() !== '') // Filter out empty departments
-      .map((deptName, index) => ({
-        id: index + 1,
-        name: deptName,
-      }));
+    const uniqueDepartmentNames = collectDepartmentNames(employees);
+    const departmentsMap = new Map();
+
+    uniqueDepartmentNames
+      .filter(deptName => deptName && deptName.trim() !== '')
+      .forEach(deptName => {
+        const normalizedDepartmentName = deptName.trim();
+        const departmentId = buildDepartmentId(normalizedDepartmentName);
+        if (!departmentId || departmentsMap.has(departmentId)) {
+          return;
+        }
+
+        departmentsMap.set(departmentId, {
+          id: departmentId,
+          name: normalizedDepartmentName,
+        });
+      });
+
+    const departmentObjects = Array.from(departmentsMap.values());
 
     setDepartments(departmentObjects);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employees]);
 
-  // Загрузка сгенерированного графика из localStorage
+  // Инициализация хранилища графиков (включая миграцию legacy данных в новый store)
   useEffect(() => {
-    const savedSchedule = localStorage.getItem('generatedSchedule');
-    if (savedSchedule) {
-      try {
-        setGeneratedSchedule(JSON.parse(savedSchedule));
-      } catch (e) {
-        console.error('Ошибка при загрузке графика:', e);
-      }
+    if (isScheduleBootstrapCompletedRef.current || departments.length === 0) {
+      return;
     }
-  }, []);
+
+    const fallbackDepartmentId = departments[0]?.id ?? null;
+    const migrationResult = migrateLegacySchedules({
+      departments,
+      employees,
+      fallbackDepartmentId,
+    });
+
+    const initialDepartmentId = normalizeDepartmentId(migrationResult.migratedDepartmentId);
+
+    if (initialDepartmentId !== null) {
+      setScheduleDepartmentId(initialDepartmentId);
+
+      const initialSchedule = getScheduleByDepartment(initialDepartmentId, migrationResult.store);
+      setGeneratedSchedule(initialSchedule);
+    } else {
+      setScheduleDepartmentId(null);
+      setGeneratedSchedule(null);
+    }
+
+    isScheduleBootstrapCompletedRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [departments, employees]);
+
+  // Подгрузка графика выбранного отдела для страницы графика
+  useEffect(() => {
+    if (!isScheduleBootstrapCompletedRef.current) {
+      return;
+    }
+
+    const normalizedDepartmentId = normalizeDepartmentId(scheduleDepartmentId);
+    if (!normalizedDepartmentId) {
+      setGeneratedSchedule(null);
+      return;
+    }
+
+    const scheduleForDepartment = getScheduleByDepartment(normalizedDepartmentId);
+    setGeneratedSchedule(scheduleForDepartment);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scheduleDepartmentId]);
 
   // Сохранение сотрудников при их изменении
   useEffect(() => {
     // Only save to localStorage after initial load is completed to prevent overwriting saved data
     if (initialLoadCompleted) {
       // Save employees to department-specific storage instead of global
-
-      const stacjaEmployees = employees.filter(emp => emp.department === 'Stacja');
-      const wildBeanCafeEmployees = employees.filter(emp => emp.department === 'Wild Bean Cafe');
-
-      // Save to department-specific keys
-      saveEmployeesByDepartment('Stacja', stacjaEmployees);
-      saveEmployeesByDepartment('Wild Bean Cafe', wildBeanCafeEmployees);
+      const departmentNamesToPersist = collectDepartmentNames(employees);
+      departmentNamesToPersist.forEach(departmentName => {
+        const departmentEmployees = employees.filter(emp => emp.department === departmentName);
+        saveEmployeesByDepartment(departmentName, departmentEmployees);
+      });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employees, initialLoadCompleted]);
 
   // Добавляем нового сотрудника в начало списка, чтобы он отображался первым в таблице
@@ -88,43 +178,69 @@ function App() {
     setEmployees(updatedEmployees);
   };
 
-  // Сохраняем сгенерированный график и переключаемся на вкладку "Grafik"
+  // Сохраняем сгенерированный график только в ветку выбранного отдела и переключаемся на вкладку "Grafik"
   const handleGenerateSchedule = scheduleData => {
-    // Attach department metadata so the schedule page can deterministically render
-    // only the last generated schedule (single department) and avoid showing
-    // extra empty/old department tables.
-    const deptObj = departments.find(d => d.id === selectedDepartment);
+    const normalizedDepartmentId = normalizeDepartmentId(selectedDepartment);
+    if (!normalizedDepartmentId) return;
+
+    const deptObj = departments.find(d => String(d.id) === String(normalizedDepartmentId));
     const schedulePayload = {
       ...scheduleData,
-      departmentId: selectedDepartment ?? null,
+      departmentId: normalizedDepartmentId,
       departmentName: deptObj ? deptObj.name : null,
       dayShiftRequired: scheduleData?.dayShiftRequired ?? 1,
       nightShiftRequired: scheduleData?.nightShiftRequired ?? 1,
     };
 
+    upsertScheduleByDepartment(normalizedDepartmentId, schedulePayload);
     setGeneratedSchedule(schedulePayload);
-    localStorage.setItem('generatedSchedule', JSON.stringify(schedulePayload));
+    setScheduleDepartmentId(normalizedDepartmentId);
     setActiveTab('schedule-table');
   };
 
   // Обновление отдельной ячейки итогового графика (для редактирования пользователем)
   const handleScheduleCellChange = (employeeId, dayIndex, newValue) => {
-    if (!generatedSchedule) return;
-    const updated = { ...generatedSchedule };
-    // Ensure schedule object exists
-    if (!updated.schedule) updated.schedule = {};
-    if (!updated.schedule[employeeId]) {
-      // Initialize with nulls for all days of month
-      const daysInMonth = new Date(updated.year, updated.month + 1, 0).getDate();
-      updated.schedule[employeeId] = Array(daysInMonth).fill(null);
+    const normalizedDepartmentId = normalizeDepartmentId(scheduleDepartmentId);
+    if (!normalizedDepartmentId || !generatedSchedule) return;
+
+    const deptObj = departments.find(d => String(d.id) === String(normalizedDepartmentId));
+    const daysInMonth = new Date(generatedSchedule.year, generatedSchedule.month + 1, 0).getDate();
+
+    if (dayIndex < 0 || dayIndex >= daysInMonth) {
+      return;
     }
-    updated.schedule[employeeId][dayIndex] = newValue || null;
+
+    const baseSchedule =
+      generatedSchedule.schedule && typeof generatedSchedule.schedule === 'object'
+        ? generatedSchedule.schedule
+        : {};
+    const baseEmployeeSchedule = Array.isArray(baseSchedule[employeeId])
+      ? baseSchedule[employeeId]
+      : [];
+    const nextEmployeeSchedule = Array.from(
+      { length: daysInMonth },
+      (_, index) => baseEmployeeSchedule[index] ?? null
+    );
+    nextEmployeeSchedule[dayIndex] = newValue || null;
+
+    const updated = {
+      ...generatedSchedule,
+      departmentId: normalizedDepartmentId,
+      departmentName: generatedSchedule.departmentName || deptObj?.name || null,
+      schedule: {
+        ...baseSchedule,
+        [employeeId]: nextEmployeeSchedule,
+      },
+    };
+
     setGeneratedSchedule(updated);
-    localStorage.setItem('generatedSchedule', JSON.stringify(updated));
+    upsertScheduleByDepartment(normalizedDepartmentId, updated);
   };
 
   const handleDepartmentChange = departmentId => {
-    setSelectedDepartment(departmentId);
+    const normalizedDepartmentId = normalizeDepartmentId(departmentId);
+    setSelectedDepartment(normalizedDepartmentId);
+    setScheduleDepartmentId(normalizedDepartmentId);
   };
 
   return (
@@ -154,7 +270,6 @@ function App() {
                   employees={employees}
                   onAddEmployee={handleAddEmployee}
                   onDeleteEmployee={handleDeleteEmployee}
-                  currentDepartment={selectedDepartment}
                   departments={departments}
                 />
               ),
@@ -182,6 +297,8 @@ function App() {
                   departments={departments}
                   employees={employees}
                   onCellChange={handleScheduleCellChange}
+                  selectedDepartment={scheduleDepartmentId}
+                  onDepartmentChange={handleDepartmentChange}
                 />
               ),
             },
