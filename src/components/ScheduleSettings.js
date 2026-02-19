@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { DatePicker, Select, Button, Table, Space, Card, Typography } from 'antd';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { DatePicker, Select, Button, Table, Space, Card, Typography, Grid } from 'antd';
 import styles from './ScheduleTable.module.css';
 import { generateSchedule } from '../utils/scheduleGenerator';
 // Specific locale for DatePicker to ensure month names are displayed in Polish.
@@ -7,6 +7,73 @@ import datePickerPl from 'antd/es/date-picker/locale/pl_PL';
 
 const { Title } = Typography;
 const { Option } = Select;
+const { useBreakpoint } = Grid;
+const WEEKDAY_MAP = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb'];
+const MANUAL_CONSTRAINT_OPTIONS = [
+  { value: '', label: ' ' },
+  { value: '0', label: '0' },
+  { value: 'U', label: 'U' },
+];
+
+const getShiftClass = shift => {
+  switch (shift) {
+    case '7-19':
+      return styles.shiftDay;
+    case '19-7':
+      return styles.shiftNight;
+    case '0':
+      return styles.shiftOff;
+    case 'U':
+      return styles.shiftVacation;
+    default:
+      return '';
+  }
+};
+
+const DateCell = React.memo(({ date, weekday, isWeekend }) => (
+  <div
+    className={
+      isWeekend
+        ? `${styles.settingsDateCell} ${styles.settingsWeekendDateCell}`
+        : styles.settingsDateCell
+    }
+  >
+    <span className={styles.settingsDateNumber}>{date}</span>
+    <span className={styles.settingsDateWeekday}>{weekday}</span>
+  </div>
+));
+
+const ConstraintCell = React.memo(
+  ({ employeeId, dayIndex, value, isWeekend, onChange }) => {
+    const handleChange = useCallback(
+      nextValue => {
+        onChange(employeeId, dayIndex, nextValue);
+      },
+      [onChange, employeeId, dayIndex]
+    );
+
+    const shiftClassName = getShiftClass(value);
+    const className = `${styles.shiftCell} ${isWeekend ? styles.weekendShiftCell : ''} ${shiftClassName}`;
+
+    return (
+      <div className={className}>
+        <Select
+          value={value}
+          onChange={handleChange}
+          options={MANUAL_CONSTRAINT_OPTIONS}
+          className={styles.shiftSelect}
+          size="small"
+        />
+      </div>
+    );
+  },
+  (prevProps, nextProps) =>
+    prevProps.value === nextProps.value &&
+    prevProps.isWeekend === nextProps.isWeekend &&
+    prevProps.employeeId === nextProps.employeeId &&
+    prevProps.dayIndex === nextProps.dayIndex &&
+    prevProps.onChange === nextProps.onChange
+);
 
 const ScheduleSettings = ({
   departments,
@@ -24,37 +91,143 @@ const ScheduleSettings = ({
   const [error, setError] = useState('');
   const [dayShiftRequired, setDayShiftRequired] = useState(null);
   const [nightShiftRequired, setNightShiftRequired] = useState(null);
+  const [tableData, setTableData] = useState([]);
+  const screens = useBreakpoint();
+
+  const tableScale = useMemo(() => {
+    if (!screens.md) {
+      return {
+        dateColWidth: 60,
+        employeeColWidth: 36,
+      };
+    }
+
+    if (!screens.lg) {
+      return {
+        dateColWidth: 64,
+        employeeColWidth: 40,
+      };
+    }
+
+    if (!screens.xl) {
+      return {
+        dateColWidth: 68,
+        employeeColWidth: 42,
+      };
+    }
+
+    return {
+      dateColWidth: 72,
+      employeeColWidth: 44,
+    };
+  }, [screens.md, screens.lg, screens.xl]);
+
+  const selectedDepartmentObj = useMemo(
+    () => departments.find(d => d.id === selectedDepartment) || null,
+    [departments, selectedDepartment]
+  );
+  const departmentName = selectedDepartmentObj ? selectedDepartmentObj.name : null;
+
+  const filteredEmployees = useMemo(() => {
+    if (!departmentName) return [];
+    return employees.filter(emp => emp.department === departmentName);
+  }, [employees, departmentName]);
+
+  const employeesById = useMemo(() => {
+    const map = new Map();
+    filteredEmployees.forEach(employee => {
+      map.set(employee.id, employee);
+    });
+    return map;
+  }, [filteredEmployees]);
+
+  const daysInMonth = useMemo(() => {
+    if (month === null || year === null) return 0;
+    return new Date(year, month + 1, 0).getDate();
+  }, [month, year]);
+
+  const dayRowsMeta = useMemo(() => {
+    if (!daysInMonth || month === null || year === null) return [];
+    const rows = [];
+    for (let dayIndex = 0; dayIndex < daysInMonth; dayIndex++) {
+      const date = new Date(year, month, dayIndex + 1);
+      const dow = date.getDay();
+      rows.push({
+        key: dayIndex,
+        dayIndex,
+        date: dayIndex + 1,
+        weekday: WEEKDAY_MAP[dow],
+        isWeekend: dow === 0 || dow === 6,
+      });
+    }
+    return rows;
+  }, [daysInMonth, month, year]);
+
+  const manualConstraintsRef = useRef(manualConstraints);
 
   // Keep compatibility with existing employee flags/data shape.
-  const hasSaturdayRestriction = employee => {
+  const hasSaturdayRestriction = useCallback(employee => {
     if (!employee) return false;
     if (employee.doesNotWorkOnSaturdays === true) return true;
     if (employee.noSaturdays === true) return true;
     return (
       Array.isArray(employee.constraints) && employee.constraints.includes('Nie pracuje w soboty')
     );
-  };
+  }, []);
+
+  const getDefaultShift = useCallback(
+    (day, employee) => {
+      const d = new Date(year, month, day);
+      const dow = d.getDay(); // 0=Sun, 5=Fri, 6=Sat
+      if (hasSaturdayRestriction(employee) && (dow === 5 || dow === 6)) {
+        return '0';
+      }
+      return '';
+    },
+    [hasSaturdayRestriction, month, year]
+  );
+
+  const buildTableRows = useCallback(
+    (constraints, employeesToRender) => {
+      if (!dayRowsMeta.length || !employeesToRender.length) {
+        return dayRowsMeta.map(row => ({ ...row }));
+      }
+
+      return dayRowsMeta.map(meta => {
+        const row = { ...meta };
+        employeesToRender.forEach(emp => {
+          const manualValue = constraints[emp.id]?.[meta.dayIndex];
+          row[emp.id] =
+            manualValue !== undefined && manualValue !== ''
+              ? manualValue
+              : getDefaultShift(meta.date, emp);
+        });
+        return row;
+      });
+    },
+    [dayRowsMeta, getDefaultShift]
+  );
+
+  useEffect(() => {
+    manualConstraintsRef.current = manualConstraints;
+  }, [manualConstraints]);
 
   // Обновляем ограничения при изменении сотрудников или выбранного отдела
   // Инициализация и обновление ограничений (manualConstraints) при изменении месяца, года или отдела.
   // Кроме того, автоматически проставляем "0" в пятницы и субботы для сотрудников, у которых установлен флаг
   // `doesNotWorkOnSaturdays`.
   useEffect(() => {
-    if (!selectedMonthYear || !selectedDepartment) return;
+    if (!selectedMonthYear || !selectedDepartment || !departmentName || !daysInMonth) {
+      setTableData([]);
+      return;
+    }
 
-    // Находим объект отдела, чтобы получить его название (employees хранят название отдела, а не id).
-    const deptObj = departments.find(d => d.id === selectedDepartment);
-    const deptName = deptObj ? deptObj.name : null;
-    if (!deptName) return;
-
-    const filteredEmployees = employees.filter(emp => emp.department === deptName);
-
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const baseConstraints = manualConstraintsRef.current;
     const newConstraints = {};
 
     filteredEmployees.forEach(employee => {
       // Если ограничения уже есть – копируем их, иначе создаём массив пустых строк.
-      const existing = manualConstraints[employee.id] || [];
+      const existing = baseConstraints[employee.id] || [];
       const arr = existing.slice(0, daysInMonth);
       while (arr.length < daysInMonth) arr.push('');
 
@@ -64,10 +237,8 @@ const ScheduleSettings = ({
         for (let dayIdx = 0; dayIdx < daysInMonth; dayIdx++) {
           const date = new Date(year, month, dayIdx + 1);
           const dow = date.getDay(); // 0=Sun, 5=Fri, 6=Sat
-          if (dow === 5 || dow === 6) {
-            if (!arr[dayIdx]) {
-              arr[dayIdx] = '0';
-            }
+          if ((dow === 5 || dow === 6) && !arr[dayIdx]) {
+            arr[dayIdx] = '0';
           }
         }
       }
@@ -75,12 +246,24 @@ const ScheduleSettings = ({
       newConstraints[employee.id] = arr;
     });
 
-    setManualConstraints(prev => ({
-      ...prev,
+    const mergedConstraints = {
+      ...baseConstraints,
       ...newConstraints,
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDepartment, employees, selectedMonthYear, month, year, departments]);
+    };
+
+    setManualConstraints(mergedConstraints);
+    setTableData(buildTableRows(mergedConstraints, filteredEmployees));
+  }, [
+    selectedDepartment,
+    selectedMonthYear,
+    departmentName,
+    daysInMonth,
+    filteredEmployees,
+    hasSaturdayRestriction,
+    month,
+    year,
+    buildTableRows,
+  ]);
 
   const handleMonthChange = date => {
     if (date) {
@@ -91,47 +274,59 @@ const ScheduleSettings = ({
       setSelectedMonthYear(date);
       // При смене месяца сбрасываем ограничения – useEffect выше пересоздаст их с учётом автоматических 0.
       setManualConstraints({});
+      setTableData([]);
+      return;
     }
+
+    setSelectedMonthYear(null);
+    setMonth(null);
+    setYear(null);
+    setManualConstraints({});
+    setTableData([]);
   };
 
-  const handleConstraintChange = (employeeId, dayIndex, value) => {
-    setManualConstraints(prev => {
-      // Ensure the constraints array exists for the employee; initialise with empty strings for the month length
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const employeeConstraints = prev[employeeId] || new Array(daysInMonth).fill('');
-      return {
-        ...prev,
-        [employeeId]: employeeConstraints.map((val, idx) => (idx === dayIndex ? value : val)),
-      };
-    });
-  };
+  const handleConstraintChange = useCallback(
+    (employeeId, dayIndex, value) => {
+      setManualConstraints(prev => {
+        // Ensure the constraints array exists for the employee; initialise with empty strings for the month length
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const employeeConstraints = prev[employeeId] || new Array(daysInMonth).fill('');
 
-  // Map shift codes to CSS classes for styling – same as in ScheduleTable.
-  const getShiftClass = shift => {
-    switch (shift) {
-      case '7-19':
-        return styles.shiftDay;
-      case '19-7':
-        return styles.shiftNight;
-      case '0':
-        return styles.shiftOff;
-      case 'U':
-        return styles.shiftVacation;
-      default:
-        return '';
-    }
-  };
+        if (employeeConstraints[dayIndex] === value) {
+          return prev;
+        }
 
-  // Determine default shift for a given day and employee.
-  // Returns "0" for Friday (5) or Saturday (6) when the employee does not work on Saturdays.
-  const getDefaultShift = (day, employee) => {
-    const d = new Date(year, month, day);
-    const dow = d.getDay(); // 0=Sun, 5=Fri, 6=Sat
-    if (hasSaturdayRestriction(employee) && (dow === 5 || dow === 6)) {
-      return '0';
-    }
-    return '';
-  };
+        const nextEmployeeConstraints = employeeConstraints.slice();
+        nextEmployeeConstraints[dayIndex] = value;
+
+        return {
+          ...prev,
+          [employeeId]: nextEmployeeConstraints,
+        };
+      });
+
+      setTableData(prevRows => {
+        const currentRow = prevRows[dayIndex];
+        if (!currentRow) return prevRows;
+
+        const employee = employeesById.get(employeeId);
+        const defaultShift = employee ? getDefaultShift(dayIndex + 1, employee) : '';
+        const displayValue = value === '' ? defaultShift : value;
+
+        if (currentRow[employeeId] === displayValue) {
+          return prevRows;
+        }
+
+        const nextRows = prevRows.slice();
+        nextRows[dayIndex] = {
+          ...currentRow,
+          [employeeId]: displayValue,
+        };
+        return nextRows;
+      });
+    },
+    [month, year, employeesById, getDefaultShift]
+  );
 
   // Generates the schedule for the selected month and department.
   // Fixed filtering: employees store department name in `department`, while
@@ -185,95 +380,20 @@ const ScheduleSettings = ({
     }
   };
 
-  // Подготовка данных для таблицы
-  // Prepare data where each row represents a day of the month.
-  const prepareTableData = () => {
-    if (!selectedDepartment || !selectedMonthYear) return [];
-
-    const deptObj = departments.find(d => d.id === selectedDepartment);
-    const deptName = deptObj ? deptObj.name : null;
-    if (!deptName) return [];
-
-    const filteredEmployees = employees.filter(emp => emp.department === deptName);
-
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const rows = [];
-    for (let dayIdx = 0; dayIdx < daysInMonth; dayIdx++) {
-      const row = { key: dayIdx };
-      const date = new Date(year, month, dayIdx + 1);
-      const dow = date.getDay();
-      const isWeekend = dow === 0 || dow === 6;
-      // Add a readable label for the first column (will be rendered via column render)
-      row.date = dayIdx + 1;
-      filteredEmployees.forEach(emp => {
-        const manualValue = manualConstraints[emp.id]?.[dayIdx];
-        const value =
-          manualValue !== undefined && manualValue !== ''
-            ? manualValue
-            : getDefaultShift(dayIdx + 1, emp);
-        const select = (
-          <Select
-            value={value}
-            onChange={val => handleConstraintChange(emp.id, dayIdx, val)}
-            style={{ width: '100%' }}
-            size="small"
-          >
-            <Option value=""> </Option>
-            <Option value="0">0</Option>
-            <Option value="U">U</Option>
-          </Select>
-        );
-        // `shiftCell` is UI-only: ensures no ellipsis for shift labels inside Select.
-        // No business logic changes.
-        row[emp.id] = (
-          <div
-            className={`${styles.shiftCell} ${isWeekend ? styles.weekendShiftCell : ''} ${getShiftClass(value)}`}
-          >
-            {select}
-          </div>
-        );
-      });
-      rows.push(row);
-    }
-    return rows;
-  };
-
-  // Подготовка колонок для таблицы
   // Columns: first column – date, then one column per employee.
-  const prepareColumns = () => {
-    if (!selectedMonthYear) return [];
+  const columns = useMemo(() => {
+    if (!selectedMonthYear || !selectedDepartment || !departmentName) return [];
 
-    const deptObj = departments.find(d => d.id === selectedDepartment);
-    const deptName = deptObj ? deptObj.name : null;
-    if (!deptName) return [];
-
-    const filteredEmployees = employees.filter(emp => emp.department === deptName);
-    const columns = [
+    const nextColumns = [
       {
         title: 'Data',
         dataIndex: 'date',
         key: 'date',
         fixed: 'left',
-        width: 72,
-        render: (text, record) => {
-          const date = new Date(year, month, record.date);
-          const dow = date.getDay();
-          const weekdayMap = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb'];
-          const weekday = weekdayMap[dow];
-          const isWeekend = dow === 0 || dow === 6;
-          return (
-            <div
-              className={
-                isWeekend
-                  ? `${styles.settingsDateCell} ${styles.settingsWeekendDateCell}`
-                  : styles.settingsDateCell
-              }
-            >
-              <span className={styles.settingsDateNumber}>{record.date}</span>
-              <span className={styles.settingsDateWeekday}>{weekday}</span>
-            </div>
-          );
-        },
+        width: tableScale.dateColWidth,
+        render: (_, record) => (
+          <DateCell date={record.date} weekday={record.weekday} isWeekend={record.isWeekend} />
+        ),
       },
     ];
 
@@ -281,23 +401,45 @@ const ScheduleSettings = ({
       const firstName = emp.firstName || '';
       const lastName = emp.lastName || '';
       const fullName = [firstName, lastName].filter(Boolean).join(' ');
-      columns.push({
+
+      nextColumns.push({
         title: (
-          <div className={styles.employeeHeaderWrap} title={fullName} data-employee-id={emp.id}>
-            <span className={styles.employeeHeaderFirstName}>{firstName}</span>
-            <span className={styles.employeeHeaderLastName}>{lastName}</span>
+          <div
+            className={styles.settingsEmployeeHeaderWrap}
+            title={fullName}
+            data-employee-id={emp.id}
+          >
+            <span className={styles.settingsEmployeeHeaderFirstName}>{firstName}</span>
+            <span className={styles.settingsEmployeeHeaderLastName}>{lastName}</span>
           </div>
         ),
         dataIndex: emp.id,
         key: emp.id,
-        width: 52,
+        width: tableScale.employeeColWidth,
         align: 'center',
-        onHeaderCell: () => ({ className: styles.employeeHeaderCell }),
+        onHeaderCell: () => ({ className: styles.settingsEmployeeHeaderCell }),
+        shouldCellUpdate: (record, prevRecord) => record[emp.id] !== prevRecord[emp.id],
+        render: (_, record) => (
+          <ConstraintCell
+            employeeId={emp.id}
+            dayIndex={record.dayIndex}
+            value={record[emp.id]}
+            isWeekend={record.isWeekend}
+            onChange={handleConstraintChange}
+          />
+        ),
       });
     });
 
-    return columns;
-  };
+    return nextColumns;
+  }, [
+    selectedMonthYear,
+    selectedDepartment,
+    departmentName,
+    filteredEmployees,
+    tableScale,
+    handleConstraintChange,
+  ]);
 
   return (
     <Card style={{ marginBottom: 24 }}>
@@ -377,15 +519,16 @@ const ScheduleSettings = ({
         )}
 
         {selectedMonthYear && selectedDepartment && (
-          <div style={{ overflowX: 'auto' }}>
+          <div className={styles.settingsTableViewport}>
             <Table
               className={styles.settingsTable}
-              columns={prepareColumns()}
-              dataSource={prepareTableData()}
+              columns={columns}
+              dataSource={tableData}
               pagination={false}
               scroll={{ x: 'max-content' }}
               size="small"
               bordered
+              rowKey="key"
             />
           </div>
         )}
