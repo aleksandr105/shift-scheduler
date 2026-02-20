@@ -114,9 +114,14 @@ const ScheduleTable = ({
   selectedDepartment,
   onDepartmentChange,
 }) => {
+  const TABLE_WRAPPER_BOTTOM_GAP_PX = 24;
+  const TABLE_WRAPPER_MIN_HEIGHT_PX = 240;
+
   const [optimisticCells, setOptimisticCells] = useState({});
   const [pendingCells, setPendingCells] = useState({});
+  const [tableWrapperHeight, setTableWrapperHeight] = useState(null);
   const pendingTokensRef = useRef({});
+  const tableWrapperRef = useRef(null);
 
   const selectedDepartmentObj = departments.find(
     dept => String(dept.id) === String(selectedDepartment)
@@ -155,6 +160,18 @@ const ScheduleTable = ({
         : [],
     [departmentNameToRender, employees]
   );
+
+  const hasScheduleForDepartment = Boolean(
+    scheduleData &&
+    departmentNameToRender &&
+    scheduleData.departmentId &&
+    String(scheduleData.departmentId) === String(selectedDepartment)
+  );
+  const hasEmployeesInDepartment = deptEmployees.length > 0;
+  const canRenderScheduleTable = hasScheduleForDepartment && hasEmployeesInDepartment;
+  const noDataMessage = hasScheduleForDepartment
+    ? 'Для этого отдела нет сотрудников.'
+    : 'Grafik nie został jeszcze wygenerowany.';
 
   useEffect(() => {
     setOptimisticCells({});
@@ -258,17 +275,44 @@ const ScheduleTable = ({
     });
   }, [dates, month, year]);
 
-  const hasScheduleForDepartment = Boolean(
-    scheduleData &&
-    departmentNameToRender &&
-    scheduleData.departmentId &&
-    String(scheduleData.departmentId) === String(selectedDepartment)
-  );
-  const hasEmployeesInDepartment = deptEmployees.length > 0;
-  const canRenderScheduleTable = hasScheduleForDepartment && hasEmployeesInDepartment;
-  const noDataMessage = hasScheduleForDepartment
-    ? 'Для этого отдела нет сотрудников.'
-    : 'Grafik nie został jeszcze wygenerowany.';
+  const recalculateTableWrapperHeight = useCallback(() => {
+    const wrapperNode = tableWrapperRef.current;
+    if (!wrapperNode) {
+      return;
+    }
+
+    const wrapperRect = wrapperNode.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const availableHeight = Math.floor(
+      viewportHeight - wrapperRect.top - TABLE_WRAPPER_BOTTOM_GAP_PX
+    );
+    const nextHeight = Math.max(TABLE_WRAPPER_MIN_HEIGHT_PX, availableHeight);
+
+    setTableWrapperHeight(prevHeight => {
+      if (prevHeight === nextHeight) {
+        return prevHeight;
+      }
+      return nextHeight;
+    });
+  }, [TABLE_WRAPPER_BOTTOM_GAP_PX, TABLE_WRAPPER_MIN_HEIGHT_PX]);
+
+  useEffect(() => {
+    if (!canRenderScheduleTable) {
+      return;
+    }
+
+    recalculateTableWrapperHeight();
+
+    const handleWindowResize = () => {
+      recalculateTableWrapperHeight();
+    };
+
+    window.addEventListener('resize', handleWindowResize);
+
+    return () => {
+      window.removeEventListener('resize', handleWindowResize);
+    };
+  }, [canRenderScheduleTable, dayRows.length, deptEmployees.length, recalculateTableWrapperHeight]);
 
   const handlePrint = useCallback(() => {
     onBeforePrint?.();
@@ -308,7 +352,11 @@ const ScheduleTable = ({
             <div style={{ marginBottom: 12 }}>
               Wymagania zmian: dzienna {displayDayShiftRequired}, nocna {displayNightShiftRequired}
             </div>
-            <div className={styles.tableWrapper}>
+            <div
+              ref={tableWrapperRef}
+              className={styles.tableWrapper}
+              style={tableWrapperHeight ? { height: `${tableWrapperHeight}px` } : undefined}
+            >
               <table className={styles.scheduleTable}>
                 <thead>
                   <tr>

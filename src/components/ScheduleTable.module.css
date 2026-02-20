@@ -127,7 +127,6 @@
   overflow-y: auto;
   width: 100%;
   max-width: 100%;
-  max-height: 72vh;
   border: 1px solid #ddd;
   isolation: isolate;
   scrollbar-gutter: stable;
@@ -684,7 +683,7 @@
 }
 
 .legendCompact {
-  margin-top: 12px;
+  margin-top: 3px;
   color: rgba(0, 0, 0, 0.65);
   font-size: 12px;
 }
@@ -726,6 +725,10 @@
 .departmentSection {
   page-break-after: always;
   margin-bottom: 32px;
+}
+
+.screenOnly.departmentSection {
+  margin-bottom: 16px;
 }
 
 .tableTitle {
