@@ -776,6 +776,8 @@
   .printOnlyLayout {
     display: block !important;
     width: 100%;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
   }
 
   .printContainer {
@@ -783,14 +785,18 @@
   }
 
   .printTitle {
-    margin: 0 0 5mm;
-    font-size: 12pt;
-    line-height: 1.15;
+    margin: 0 0 2.8mm;
+    font-size: 10.8pt;
+    line-height: 1.08;
+    break-after: avoid-page;
+    page-break-after: avoid;
   }
 
   .printTableShell {
     overflow: visible;
     width: 100%;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
   }
 
   .printTable {
@@ -801,14 +807,46 @@
 
   .printTable th,
   .printTable td {
-    font-size: 8.5pt;
-    padding: 0.8mm 0.7mm;
+    font-size: 7.4pt;
+    padding: 0.45mm 0.45mm;
+    line-height: 1;
   }
 
   .printDateHeaderCell,
   .printDateCell {
-    width: 15mm;
-    min-width: 15mm;
+    width: 14mm;
+    min-width: 14mm;
+  }
+
+  .printDateCellContent {
+    gap: 2px;
+    line-height: 1;
+  }
+
+  .printEmployeeHeaderCell {
+    width: 7.8mm;
+    min-width: 7.8mm;
+    max-width: 7.8mm;
+    min-height: 14mm;
+    padding: 0.35mm 0.3mm !important;
+    vertical-align: bottom;
+    text-align: left;
+    overflow: hidden;
+  }
+
+  .printEmployeeHeaderText {
+    display: block;
+    writing-mode: vertical-lr;
+    direction: ltr;
+    text-orientation: mixed;
+    white-space: normal;
+    text-overflow: clip;
+    overflow: visible;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    line-height: 1.02;
+    max-block-size: 100%;
+    text-align: left;
   }
 
   .printTable tr,
