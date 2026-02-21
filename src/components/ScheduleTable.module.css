@@ -11,94 +11,6 @@
   display: block;
 }
 
-.printOnlyLayout {
-  display: none;
-}
-
-.printTitle {
-  margin: 0 0 6px;
-  font-size: 14px;
-  line-height: 1.2;
-  font-weight: 600;
-}
-
-.printTableShell {
-  width: 100%;
-}
-
-.printTable {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-.printTable th,
-.printTable td {
-  border: 1px solid #8f8f8f;
-  text-align: center;
-  font-size: 9px;
-  line-height: 1.1;
-  padding: 1px 2px;
-  white-space: nowrap;
-}
-
-.printDateHeaderCell,
-.printDateCell {
-  width: 52px;
-  min-width: 52px;
-}
-
-.printDateHeaderCell {
-  background: #f1f1f1;
-  font-weight: 600;
-}
-
-.printEmployeeHeaderCell {
-  background: #f7f7f7;
-  font-weight: 600;
-  padding: 1px;
-}
-
-.printEmployeeHeaderText {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.printDateCell {
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-}
-
-.printDateCellContent {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.printDateNumber {
-  color: rgba(0, 0, 0, 0.88);
-}
-
-.printDateWeekday {
-  color: rgba(0, 0, 0, 0.62);
-}
-
-.printWeekendDateCell {
-  background: #fff7f7;
-}
-
-.printShiftCell {
-  font-variant-numeric: tabular-nums;
-}
-
-.printWeekendShiftCell {
-  background-image: linear-gradient(rgba(255, 235, 235, 0.45), rgba(255, 235, 235, 0.45));
-}
-
 .noPrint {
   margin-bottom: 16px;
 }
@@ -148,49 +60,6 @@
   --employee-header-gap: 1px;
   --employee-header-max-width: 118px;
   --employee-name-max-width: 116px;
-
-  --settings-employee-col-width: 44px;
-  --settings-employee-header-height: 142px;
-  --settings-employee-header-left: 38px;
-  --settings-employee-header-bottom: 6px;
-  --settings-employee-header-gap: 2px;
-  --settings-employee-header-max-width: 132px;
-  --settings-employee-name-max-width: 130px;
-}
-
-.settingsTableViewport {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  isolation: isolate;
-  scrollbar-gutter: stable;
-
-  --table-font-size: 13px;
-  --table-cell-min-width: 52px;
-  --table-cell-padding-y: 2px;
-  --table-cell-padding-x: 2px;
-  --date-col-width: 72px;
-  --date-cell-gap: 6px;
-  --date-cell-padding-x: 4px;
-  --date-weekday-font-size: 12px;
-  --shift-selector-padding-right: 18px;
-
-  --employee-col-width: 52px;
-  --employee-header-height: 126px;
-  --employee-header-left: 45px;
-  --employee-header-bottom: 6px;
-  --employee-header-gap: 1px;
-  --employee-header-max-width: 118px;
-  --employee-name-max-width: 116px;
-
-  --settings-employee-col-width: 44px;
-  --settings-employee-header-height: 142px;
-  --settings-employee-header-left: 38px;
-  --settings-employee-header-bottom: 6px;
-  --settings-employee-header-gap: 2px;
-  --settings-employee-header-max-width: 132px;
-  --settings-employee-name-max-width: 130px;
 }
 
 .scheduleTable {
@@ -327,103 +196,6 @@
   Goal: make borders match ScheduleTable (<table>) look: 1px solid #ddd
   Keep changes purely visual; do not affect print, since AntD table is not printed.
 */
-.settingsTable :global(.ant-table-container) {
-  border-color: #ddd !important;
-  border-radius: 0 !important;
-}
-
-.settingsTable :global(.ant-table) {
-  border-radius: 0 !important;
-}
-
-.settingsTable :global(.ant-table-thead > tr > th),
-.settingsTable :global(.ant-table-tbody > tr > td),
-.settingsTable :global(.ant-table-tbody > tr > th) {
-  border-color: #ddd !important;
-  text-align:center;
-  font-weight:600;
-}
-
-.settingsTable :global(.ant-table-small .ant-table-cell) {
-  padding: var(--table-cell-padding-y) var(--table-cell-padding-x) !important;
-  font-size: var(--table-font-size);
-  line-height: 1.1;
-}
-
-.settingsTable :global(.ant-table-cell-fix-left),
-.settingsTable :global(.ant-table-cell-fix-left-last) {
-  background: #fafafa;
-  background-clip: padding-box;
-}
-
-.settingsTable :global(.ant-table-thead .ant-table-cell-fix-left),
-.settingsTable :global(.ant-table-thead .ant-table-cell-fix-left-last) {
-  z-index: 7 !important;
-}
-
-.settingsTable :global(.ant-table-tbody .ant-table-cell-fix-left),
-.settingsTable :global(.ant-table-tbody .ant-table-cell-fix-left-last) {
-  z-index: 4 !important;
-}
-
-/*
-  ScheduleSettings employee headers only (AntD Table).
-  Isolated from Grafik headers to avoid cross-screen regressions.
-*/
-.settingsEmployeeHeaderCell {
-  position: relative;
-  vertical-align: bottom;
-  padding: 0 !important;
-  white-space: normal !important;
-  line-height: 1;
-  min-width: var(--settings-employee-col-width);
-  width: var(--settings-employee-col-width);
-  max-width: var(--settings-employee-col-width);
-  min-height: var(--settings-employee-header-height);
-  height: var(--settings-employee-header-height);
-  overflow: visible;
-}
-
-.settingsEmployeeHeaderWrap {
-  position: absolute;
-  left: var(--settings-employee-header-left);
-  bottom: var(--settings-employee-header-bottom);
-
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: var(--settings-employee-header-gap);
-
-  box-sizing: border-box;
-  max-width: var(--settings-employee-header-max-width);
-  padding: 0;
-
-  transform: rotate(-90deg);
-  transform-origin: left bottom;
-
-  cursor: default;
-}
-
-.settingsEmployeeHeaderFirstName,
-.settingsEmployeeHeaderLastName {
-  display: block;
-  max-width: var(--settings-employee-name-max-width);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: left;
-  line-height: 1.05;
-}
-
-.settingsEmployeeHeaderFirstName {
-  font-weight: 600;
-}
-
-.settingsEmployeeHeaderLastName {
-  font-weight: 500;
-}
-
 /*
   Employee header (both: ScheduleTable <table> and AntD Table in ScheduleSettings)
   Goal: two-line layout (first name + last name) with fixed/stable header height
@@ -510,36 +282,8 @@
   background-color: #f9f9f9;
 }
 
-/* ScheduleSettings (Ustawienia grafiku) – date cell styling (AntD Table first column)
-   Requirement: weekday + day number horizontally, with neutral separation and subtle weekend highlight. */
-.settingsDateCell {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--date-cell-gap);
-
-  /* padding: 2px 8px; */
-  border: 1px solid #f0f0f0;
-  border-radius: 6px;
-  background-color: #fbfbfb;
-
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.settingsDateNumber {
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.88);
-}
-
-.settingsDateWeekday {
-  font-size: var(--date-weekday-font-size);
-  color: rgba(0, 0, 0, 0.45);
-}
-
 @media (max-width: 1200px) {
-  .tableWrapper,
-  .settingsTableViewport {
+  .tableWrapper {
     --table-font-size: 12px;
     --table-cell-min-width: 48px;
     --table-cell-padding-y: 2px;
@@ -556,19 +300,11 @@
     --employee-header-bottom: 5px;
     --employee-header-max-width: 108px;
     --employee-name-max-width: 106px;
-
-    --settings-employee-col-width: 42px;
-    --settings-employee-header-height: 130px;
-    --settings-employee-header-left: 36px;
-    --settings-employee-header-bottom: 5px;
-    --settings-employee-header-max-width: 120px;
-    --settings-employee-name-max-width: 118px;
   }
 }
 
 @media (max-width: 992px) {
-  .tableWrapper,
-  .settingsTableViewport {
+  .tableWrapper {
     --table-font-size: 12px;
     --table-cell-min-width: 44px;
     --table-cell-padding-y: 1px;
@@ -585,19 +321,11 @@
     --employee-header-bottom: 4px;
     --employee-header-max-width: 98px;
     --employee-name-max-width: 96px;
-
-    --settings-employee-col-width: 40px;
-    --settings-employee-header-height: 118px;
-    --settings-employee-header-left: 34px;
-    --settings-employee-header-bottom: 4px;
-    --settings-employee-header-max-width: 110px;
-    --settings-employee-name-max-width: 108px;
   }
 }
 
 @media (max-width: 768px) {
-  .tableWrapper,
-  .settingsTableViewport {
+  .tableWrapper {
     --table-font-size: 11px;
     --table-cell-min-width: 40px;
     --date-col-width: 60px;
@@ -611,25 +339,7 @@
     --employee-header-bottom: 3px;
     --employee-header-max-width: 86px;
     --employee-name-max-width: 84px;
-
-    --settings-employee-col-width: 36px;
-    --settings-employee-header-height: 104px;
-    --settings-employee-header-left: 30px;
-    --settings-employee-header-bottom: 3px;
-    --settings-employee-header-max-width: 96px;
-    --settings-employee-name-max-width: 94px;
   }
-}
-
-/* Subtle weekend highlight (Sat + Sun) */
-.settingsWeekendDateCell {
-  background-color: #fff7f7;
-  border-color: #ffe3e3;
-}
-
-.settingsWeekendDateCell .settingsDateNumber,
-.settingsWeekendDateCell .settingsDateWeekday {
-  color: rgba(140, 0, 0, 0.75);
 }
 
 .weekendShiftCell {
@@ -742,11 +452,6 @@
   page-break-after: always;
 }
 
-@page {
-  size: A4 landscape;
-  margin: 8mm;
-}
-
 @media print {
   :global(body) {
     margin: 0 !important;
@@ -773,86 +478,7 @@
     display: none !important;
   }
 
-  .printOnlyLayout {
-    display: block !important;
-    width: 100%;
-    break-inside: avoid-page;
-    page-break-inside: avoid;
-  }
-
   .printContainer {
     margin: 0;
-  }
-
-  .printTitle {
-    margin: 0 0 2.8mm;
-    font-size: 10.8pt;
-    line-height: 1.08;
-    break-after: avoid-page;
-    page-break-after: avoid;
-  }
-
-  .printTableShell {
-    overflow: visible;
-    width: 100%;
-    break-inside: avoid-page;
-    page-break-inside: avoid;
-  }
-
-  .printTable {
-    width: 100%;
-    table-layout: fixed;
-    break-inside: avoid-page;
-  }
-
-  .printTable th,
-  .printTable td {
-    font-size: 7.4pt;
-    padding: 0.45mm 0.45mm;
-    line-height: 1;
-  }
-
-  .printDateHeaderCell,
-  .printDateCell {
-    width: 14mm;
-    min-width: 14mm;
-  }
-
-  .printDateCellContent {
-    gap: 2px;
-    line-height: 1;
-  }
-
-  .printEmployeeHeaderCell {
-    width: 7.8mm;
-    min-width: 7.8mm;
-    max-width: 7.8mm;
-    min-height: 14mm;
-    padding: 0.35mm 0.3mm !important;
-    vertical-align: bottom;
-    text-align: left;
-    overflow: hidden;
-  }
-
-  .printEmployeeHeaderText {
-    display: block;
-    writing-mode: vertical-lr;
-    direction: ltr;
-    text-orientation: mixed;
-    white-space: normal;
-    text-overflow: clip;
-    overflow: visible;
-    word-break: keep-all;
-    overflow-wrap: anywhere;
-    line-height: 1.02;
-    max-block-size: 100%;
-    text-align: left;
-  }
-
-  .printTable tr,
-  .printTable td,
-  .printTable th {
-    break-inside: avoid;
-    page-break-inside: avoid;
   }
 }

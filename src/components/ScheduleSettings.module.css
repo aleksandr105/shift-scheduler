@@ -1,0 +1,222 @@
+.settingsTableViewport {
+  width: 100%;
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid #ddd;
+  isolation: isolate;
+  scrollbar-gutter: stable;
+
+  min-height: 240px;
+  max-height: calc(100vh - 320px);
+
+  --settings-table-font-size: 13px;
+  --settings-table-cell-min-width: 52px;
+  --settings-table-cell-padding-y: 2px;
+  --settings-table-cell-padding-x: 2px;
+
+  --settings-date-col-width: 72px;
+  --settings-employee-col-width: 44px;
+  --settings-header-height: 132px;
+  --settings-header-gap: 3px;
+}
+
+.settingsTable {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.settingsTable th,
+.settingsTable td {
+  border: 1px solid #ddd;
+  padding: var(--settings-table-cell-padding-y) var(--settings-table-cell-padding-x);
+  text-align: center;
+  min-width: var(--settings-table-cell-min-width);
+  white-space: nowrap;
+  font-size: var(--settings-table-font-size);
+  line-height: 1.1;
+  background: #fff;
+}
+
+.settingsStickyHeaderCell {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  background: #f7f7f7;
+  background-clip: padding-box;
+}
+
+.settingsStickyDateHeaderCell {
+  left: 0;
+  z-index: 12;
+  width: var(--settings-date-col-width);
+  min-width: var(--settings-date-col-width) !important;
+  box-shadow: 1px 0 0 #ddd;
+  background: #f5f5f5;
+}
+
+.settingsStickyDateCell {
+  position: sticky;
+  left: 0;
+  z-index: 6;
+  width: var(--settings-date-col-width);
+  min-width: var(--settings-date-col-width) !important;
+  background: #fafafa;
+  background-clip: padding-box;
+  box-shadow: 1px 0 0 #ddd;
+}
+
+.settingsEmployeeHeaderCell {
+  width: var(--settings-employee-col-width);
+  min-width: var(--settings-employee-col-width);
+  max-width: var(--settings-employee-col-width);
+  height: var(--settings-header-height);
+  min-height: var(--settings-header-height);
+  vertical-align: bottom;
+  padding: 0 !important;
+}
+
+.settingsEmployeeHeaderWrap {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--settings-header-gap);
+  padding: 6px 1px;
+  box-sizing: border-box;
+  cursor: default;
+}
+
+.settingsEmployeeHeaderFirstName,
+.settingsEmployeeHeaderLastName {
+  display: block;
+  max-height: 100%;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  line-height: 1.05;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settingsEmployeeHeaderFirstName {
+  font-weight: 600;
+}
+
+.settingsEmployeeHeaderLastName {
+  font-weight: 500;
+}
+
+.settingsDateCell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  background-color: #fbfbfb;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  padding: 0 4px;
+}
+
+.settingsDateNumber {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.88);
+}
+
+.settingsDateWeekday {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.settingsWeekendDateCell {
+  background-color: #fff7f7;
+  border-color: #ffe3e3;
+}
+
+.settingsWeekendDateCell .settingsDateNumber,
+.settingsWeekendDateCell .settingsDateWeekday {
+  color: rgba(140, 0, 0, 0.75);
+}
+
+.settingsWeekendRow {
+  background-color: #fffafa;
+}
+
+.shiftCell {
+  font-variant-numeric: tabular-nums;
+  min-width: var(--settings-table-cell-min-width);
+}
+
+.weekendShiftCell {
+  background-image: linear-gradient(rgba(255, 233, 233, 0.5), rgba(255, 233, 233, 0.5));
+}
+
+.shiftSelect {
+  width: 100%;
+}
+
+.shiftSelect :global(.ant-select) {
+  width: 100% !important;
+}
+
+.shiftSelect :global(.ant-select-selector) {
+  padding-right: 18px !important;
+}
+
+.shiftSelect :global(.ant-select-selection-item) {
+  text-overflow: clip;
+}
+
+.shiftDay {
+  background-color: #d4edda;
+}
+
+.shiftNight {
+  background-color: #cce5ff;
+}
+
+.shiftOff {
+  background-color: #e2e3e5;
+}
+
+.shiftVacation {
+  background-color: #f8d7da;
+}
+
+@media (max-width: 1200px) {
+  .settingsTableViewport {
+    --settings-table-font-size: 12px;
+    --settings-table-cell-min-width: 48px;
+    --settings-date-col-width: 68px;
+    --settings-employee-col-width: 42px;
+    --settings-header-height: 124px;
+    --settings-header-gap: 2px;
+  }
+}
+
+@media (max-width: 992px) {
+  .settingsTableViewport {
+    --settings-table-font-size: 12px;
+    --settings-table-cell-min-width: 46px;
+    --settings-date-col-width: 64px;
+    --settings-employee-col-width: 40px;
+    --settings-header-height: 114px;
+  }
+}
+
+@media (max-width: 768px) {
+  .settingsTableViewport {
+    --settings-table-font-size: 11px;
+    --settings-table-cell-min-width: 46px;
+    --settings-date-col-width: 60px;
+    --settings-employee-col-width: 36px;
+    --settings-header-height: 104px;
+    max-height: calc(100vh - 300px);
+  }
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { DatePicker, Select, Button, Table, Space, Card, Typography, Grid } from 'antd';
-import styles from './ScheduleTable.module.css';
+import { DatePicker, Select, Button, Space, Card, Typography, Grid } from 'antd';
+import styles from './ScheduleSettings.module.css';
 import { generateSchedule } from '../utils/scheduleGenerator';
 // Specific locale for DatePicker to ensure month names are displayed in Polish.
 import datePickerPl from 'antd/es/date-picker/locale/pl_PL';
@@ -56,7 +56,7 @@ const ConstraintCell = React.memo(
     const className = `${styles.shiftCell} ${isWeekend ? styles.weekendShiftCell : ''} ${shiftClassName}`;
 
     return (
-      <div className={className}>
+      <td className={className}>
         <Select
           value={value}
           onChange={handleChange}
@@ -64,7 +64,7 @@ const ConstraintCell = React.memo(
           className={styles.shiftSelect}
           size="small"
         />
-      </div>
+      </td>
     );
   },
   (prevProps, nextProps) =>
@@ -93,6 +93,8 @@ const ScheduleSettings = ({
   const [nightShiftRequired, setNightShiftRequired] = useState(null);
   const [tableData, setTableData] = useState([]);
   const screens = useBreakpoint();
+
+  void generatedSchedule;
 
   const tableScale = useMemo(() => {
     if (!screens.md) {
@@ -362,10 +364,10 @@ const ScheduleSettings = ({
       if (!deptName) {
         throw new Error('Nie znaleziono wybranego działu');
       }
-      const filteredEmployees = employees.filter(emp => emp.department === deptName);
+      const filteredEmployeesForGeneration = employees.filter(emp => emp.department === deptName);
 
       const result = await generateSchedule(
-        filteredEmployees,
+        filteredEmployeesForGeneration,
         month,
         year,
         manualConstraints,
@@ -379,67 +381,6 @@ const ScheduleSettings = ({
       setLoading(false);
     }
   };
-
-  // Columns: first column – date, then one column per employee.
-  const columns = useMemo(() => {
-    if (!selectedMonthYear || !selectedDepartment || !departmentName) return [];
-
-    const nextColumns = [
-      {
-        title: 'Data',
-        dataIndex: 'date',
-        key: 'date',
-        fixed: 'left',
-        width: tableScale.dateColWidth,
-        render: (_, record) => (
-          <DateCell date={record.date} weekday={record.weekday} isWeekend={record.isWeekend} />
-        ),
-      },
-    ];
-
-    filteredEmployees.forEach(emp => {
-      const firstName = emp.firstName || '';
-      const lastName = emp.lastName || '';
-      const fullName = [firstName, lastName].filter(Boolean).join(' ');
-
-      nextColumns.push({
-        title: (
-          <div
-            className={styles.settingsEmployeeHeaderWrap}
-            title={fullName}
-            data-employee-id={emp.id}
-          >
-            <span className={styles.settingsEmployeeHeaderFirstName}>{firstName}</span>
-            <span className={styles.settingsEmployeeHeaderLastName}>{lastName}</span>
-          </div>
-        ),
-        dataIndex: emp.id,
-        key: emp.id,
-        width: tableScale.employeeColWidth,
-        align: 'center',
-        onHeaderCell: () => ({ className: styles.settingsEmployeeHeaderCell }),
-        shouldCellUpdate: (record, prevRecord) => record[emp.id] !== prevRecord[emp.id],
-        render: (_, record) => (
-          <ConstraintCell
-            employeeId={emp.id}
-            dayIndex={record.dayIndex}
-            value={record[emp.id]}
-            isWeekend={record.isWeekend}
-            onChange={handleConstraintChange}
-          />
-        ),
-      });
-    });
-
-    return nextColumns;
-  }, [
-    selectedMonthYear,
-    selectedDepartment,
-    departmentName,
-    filteredEmployees,
-    tableScale,
-    handleConstraintChange,
-  ]);
 
   return (
     <Card style={{ marginBottom: 24 }}>
@@ -519,17 +460,67 @@ const ScheduleSettings = ({
         )}
 
         {selectedMonthYear && selectedDepartment && (
-          <div className={styles.settingsTableViewport}>
-            <Table
-              className={styles.settingsTable}
-              columns={columns}
-              dataSource={tableData}
-              pagination={false}
-              scroll={{ x: 'max-content' }}
-              size="small"
-              bordered
-              rowKey="key"
-            />
+          <div
+            className={styles.settingsTableViewport}
+            style={{
+              '--settings-date-col-width': `${tableScale.dateColWidth}px`,
+              '--settings-employee-col-width': `${tableScale.employeeColWidth}px`,
+            }}
+          >
+            <table className={styles.settingsTable}>
+              <thead>
+                <tr>
+                  <th
+                    className={`${styles.settingsStickyHeaderCell} ${styles.settingsStickyDateHeaderCell}`}
+                  >
+                    Data
+                  </th>
+                  {filteredEmployees.map(emp => {
+                    const firstName = emp.firstName || '';
+                    const lastName = emp.lastName || '';
+                    const fullName = [firstName, lastName].filter(Boolean).join(' ');
+
+                    return (
+                      <th
+                        key={emp.id}
+                        className={`${styles.settingsStickyHeaderCell} ${styles.settingsEmployeeHeaderCell}`}
+                        title={fullName}
+                      >
+                        <div
+                          className={styles.settingsEmployeeHeaderWrap}
+                          data-employee-id={emp.id}
+                        >
+                          <span className={styles.settingsEmployeeHeaderFirstName}>
+                            {firstName}
+                          </span>
+                          <span className={styles.settingsEmployeeHeaderLastName}>{lastName}</span>
+                        </div>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                {tableData.map(row => (
+                  <tr key={row.key} className={row.isWeekend ? styles.settingsWeekendRow : ''}>
+                    <td className={styles.settingsStickyDateCell}>
+                      <DateCell date={row.date} weekday={row.weekday} isWeekend={row.isWeekend} />
+                    </td>
+
+                    {filteredEmployees.map(emp => (
+                      <ConstraintCell
+                        key={`${row.key}-${emp.id}`}
+                        employeeId={emp.id}
+                        dayIndex={row.dayIndex}
+                        value={row[emp.id] ?? getDefaultShift(row.date, emp)}
+                        isWeekend={row.isWeekend}
+                        onChange={handleConstraintChange}
+                      />
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </Space>

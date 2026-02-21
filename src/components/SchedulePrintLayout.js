@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import styles from './ScheduleTable.module.css';
+import styles from './SchedulePrintLayout.module.css';
 import { formatShiftCompact } from '../utils/formatShiftCompact';
 
 const weekdayNames = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb'];
