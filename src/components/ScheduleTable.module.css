@@ -33,12 +33,19 @@
   margin-top: 16px;
 }
 
+.tableCenter {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
 .tableWrapper {
   position: relative;
   overflow-x: auto;
   overflow-y: auto;
-  width: 100%;
+  width: fit-content;
   max-width: 100%;
+  margin: 0 auto;
   border: 1px solid #ddd;
   isolation: isolate;
   scrollbar-gutter: stable;
@@ -53,7 +60,7 @@
   --date-weekday-font-size: 12px;
   --shift-selector-padding-right: 18px;
 
-  --employee-col-width: 52px;
+  --employee-col-width: 75px;
   --employee-header-height: 126px;
   --employee-header-left: 45px;
   --employee-header-bottom: 6px;
@@ -65,7 +72,6 @@
 .scheduleTable {
   border-collapse: collapse;
   width: max-content;
-  min-width: 100%;
   table-layout: fixed;
 }
 
@@ -76,8 +82,9 @@
 }
 
 .employeeCol {
-  width: var(--employee-col-width);
-  min-width: var(--employee-col-width);
+  width: 78px !important;
+  min-width: 78px !important;
+  max-width: 78px !important;
 }
 
 .scheduleTable th,
@@ -166,7 +173,9 @@
 /* Shift cell: ensure compact time labels do not show ellipsis inside AntD Select */
 .shiftCell {
   font-variant-numeric: tabular-nums;
-  min-width: var(--table-cell-min-width);
+  min-width: 75px !important;
+  width: 75px !important;
+  max-width: 75px !important;
 }
 
 .shiftCellInner {
@@ -226,8 +235,9 @@
   padding: 0 !important;
   white-space: normal !important;
   line-height: 1.05;
-  min-width: var(--employee-col-width);
-  width: var(--employee-col-width);
+  min-width: 75px !important;
+  width: 75px !important;
+  max-width: 75px !important;
   min-height: var(--employee-header-height);
   height: var(--employee-header-height);
   cursor: default;

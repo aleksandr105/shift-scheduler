@@ -352,84 +352,92 @@ const ScheduleTable = ({
             <div style={{ marginBottom: 12 }}>
               Wymagania zmian: dzienna {displayDayShiftRequired}, nocna {displayNightShiftRequired}
             </div>
-            <div
-              ref={tableWrapperRef}
-              className={styles.tableWrapper}
-              style={tableWrapperHeight ? { height: `${tableWrapperHeight}px` } : undefined}
-            >
-              <table className={styles.scheduleTable}>
-                <thead>
-                  <tr>
-                    <th className={`${styles.stickyHeaderCell} ${styles.stickyDateHeaderCell}`}>
-                      Data
-                    </th>
-                    {deptEmployees.map(emp => {
-                      const firstName = emp.firstName || '';
-                      const lastName = emp.lastName || '';
-                      const fullName = [firstName, lastName].filter(Boolean).join(' ');
-                      return (
-                        <th
-                          key={emp.id}
-                          className={`${styles.employeeHeaderCell} ${styles.stickyHeaderCell}`}
-                        >
-                          <div
-                            className={styles.employeeHeaderWrap}
-                            title={fullName}
-                            data-employee-id={emp.id}
+            <div className={styles.tableCenter}>
+              <div
+                ref={tableWrapperRef}
+                className={styles.tableWrapper}
+                style={tableWrapperHeight ? { height: `${tableWrapperHeight}px` } : undefined}
+              >
+                <table className={styles.scheduleTable}>
+                  <colgroup>
+                    <col className={styles.dateCol} />
+                    {deptEmployees.map(emp => (
+                      <col key={`col-${emp.id}`} className={styles.employeeCol} />
+                    ))}
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th className={`${styles.stickyHeaderCell} ${styles.stickyDateHeaderCell}`}>
+                        Data
+                      </th>
+                      {deptEmployees.map(emp => {
+                        const firstName = emp.firstName || '';
+                        const lastName = emp.lastName || '';
+                        const fullName = [firstName, lastName].filter(Boolean).join(' ');
+                        return (
+                          <th
+                            key={emp.id}
+                            className={`${styles.employeeHeaderCell} ${styles.stickyHeaderCell}`}
                           >
-                            <span className={styles.employeeHeaderFirstName}>{firstName}</span>
-                            <span className={styles.employeeHeaderLastName}>{lastName}</span>
-                          </div>
-                        </th>
+                            <div
+                              className={styles.employeeHeaderWrap}
+                              title={fullName}
+                              data-employee-id={emp.id}
+                            >
+                              <span className={styles.employeeHeaderFirstName}>{firstName}</span>
+                              <span className={styles.employeeHeaderLastName}>{lastName}</span>
+                            </div>
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dayRows.map(({ day, dow, isWeekend }) => {
+                      return (
+                        <tr key={day} className={isWeekend ? styles.grafikWeekendRow : ''}>
+                          <td className={styles.stickyDateCell}>
+                            <div
+                              className={
+                                isWeekend
+                                  ? `${styles.grafikDateCell} ${styles.grafikWeekendDateCell}`
+                                  : styles.grafikDateCell
+                              }
+                            >
+                              <span className={styles.grafikDateNumber}>{day}</span>
+                              <span className={styles.grafikDateWeekday}>{weekdayNames[dow]}</span>
+                            </div>
+                          </td>
+                          {deptEmployees.map(emp => {
+                            const dayIndex = day - 1;
+                            const cellKey = buildCellKey(emp.id, dayIndex);
+                            const optimisticValue = optimisticCells[cellKey];
+                            const currentShift =
+                              schedule && schedule[emp.id] ? schedule[emp.id][dayIndex] : '';
+                            const defaultShift = getDefaultShift(day, emp, month, year);
+                            const value =
+                              optimisticValue !== undefined
+                                ? optimisticValue
+                                : currentShift || defaultShift;
+
+                            return (
+                              <ScheduleCell
+                                key={emp.id}
+                                employeeId={emp.id}
+                                dayIndex={dayIndex}
+                                value={value}
+                                isWeekend={isWeekend}
+                                isPending={Boolean(pendingCells[cellKey])}
+                                onChange={handleCellChange}
+                              />
+                            );
+                          })}
+                        </tr>
                       );
                     })}
-                  </tr>
-                </thead>
-                <tbody>
-                  {dayRows.map(({ day, dow, isWeekend }) => {
-                    return (
-                      <tr key={day} className={isWeekend ? styles.grafikWeekendRow : ''}>
-                        <td className={styles.stickyDateCell}>
-                          <div
-                            className={
-                              isWeekend
-                                ? `${styles.grafikDateCell} ${styles.grafikWeekendDateCell}`
-                                : styles.grafikDateCell
-                            }
-                          >
-                            <span className={styles.grafikDateNumber}>{day}</span>
-                            <span className={styles.grafikDateWeekday}>{weekdayNames[dow]}</span>
-                          </div>
-                        </td>
-                        {deptEmployees.map(emp => {
-                          const dayIndex = day - 1;
-                          const cellKey = buildCellKey(emp.id, dayIndex);
-                          const optimisticValue = optimisticCells[cellKey];
-                          const currentShift =
-                            schedule && schedule[emp.id] ? schedule[emp.id][dayIndex] : '';
-                          const defaultShift = getDefaultShift(day, emp, month, year);
-                          const value =
-                            optimisticValue !== undefined
-                              ? optimisticValue
-                              : currentShift || defaultShift;
-
-                          return (
-                            <ScheduleCell
-                              key={emp.id}
-                              employeeId={emp.id}
-                              dayIndex={dayIndex}
-                              value={value}
-                              isWeekend={isWeekend}
-                              isPending={Boolean(pendingCells[cellKey])}
-                              onChange={handleCellChange}
-                            />
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div className={styles.legendCompact}>
