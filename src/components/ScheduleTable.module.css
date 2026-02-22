@@ -7,6 +7,10 @@
   margin: 0;
 }
 
+.screenOnly {
+  display: block;
+}
+
 .noPrint {
   margin-bottom: 16px;
 }
@@ -29,30 +33,181 @@
   margin-top: 16px;
 }
 
-.tableWrapper {
-  overflow-x: auto;
+.tableCenter {
   width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.tableWrapper {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: auto;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  border: 1px solid #ddd;
+  isolation: isolate;
+  scrollbar-gutter: stable;
+
+  --table-font-size: 13px;
+  --table-cell-min-width: 52px;
+  --table-cell-padding-y: 2px;
+  --table-cell-padding-x: 2px;
+  --date-col-width: 60px;
+  --date-cell-gap: 6px;
+  --date-cell-padding-x: 4px;
+  --date-weekday-font-size: 12px;
+  --shift-selector-padding-right: 18px;
+
+  --employee-col-width: 75px;
+  --employee-header-height: 126px;
+  --employee-header-left: 45px;
+  --employee-header-bottom: 6px;
+  --employee-header-gap: 1px;
+  --employee-header-max-width: 118px;
+  --employee-name-max-width: 116px;
 }
 
 .scheduleTable {
   border-collapse: collapse;
   width: max-content;
-  min-width: 100%;
+  table-layout: fixed;
+}
+
+.dateCol {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+}
+
+.employeeCol {
+  width: 78px !important;
+  min-width: 78px !important;
+  max-width: 78px !important;
 }
 
 .scheduleTable th,
 .scheduleTable td {
   border: 1px solid #ddd;
-  padding: 2px;
+  padding: var(--table-cell-padding-y) var(--table-cell-padding-x);
   text-align: center;
-  min-width: 52px;
+  min-width: var(--table-cell-min-width);
   white-space: nowrap;
+  font-size: var(--table-font-size);
+  line-height: 1.1;
+}
+
+.stickyHeaderCell {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background-color: #f7f7f7;
+}
+
+.stickyDateHeaderCell {
+  left: 0;
+  z-index: 7;
+  min-width: 60px !important;
+  width: 60px !important;
+  max-width: 60px !important;
+  background-color: #f5f5f5;
+  background-clip: padding-box;
+  box-shadow: 1px 0 0 #ddd;
+  overflow: hidden;
+}
+
+.stickyDateCell {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  min-width: 60px !important;
+  width: 60px !important;
+  max-width: 60px !important;
+  background-color: #fafafa;
+  background-clip: padding-box;
+  box-shadow: 1px 0 0 #ddd;
+  overflow: hidden;
+}
+
+.grafikDateCell {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: var(--date-cell-gap);
+  border-radius: 4px;
+  padding: 0;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+}
+
+.grafikDateNumber {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.grafikDateWeekday {
+  font-size: var(--date-weekday-font-size);
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.grafikWeekendDateCell {
+  background-color: #fff9f9;
+}
+
+.grafikWeekendDateCell .grafikDateNumber,
+.grafikWeekendDateCell .grafikDateWeekday {
+  color: rgba(120, 0, 0, 0.75);
+}
+
+.grafikWeekendShiftCell {
+  background-image: linear-gradient(rgba(255, 241, 241, 0.38), rgba(255, 241, 241, 0.38));
+}
+
+.grafikWeekendRow {
+  background-color: #fffafa;
 }
 
 /* Shift cell: ensure compact time labels do not show ellipsis inside AntD Select */
 .shiftCell {
   font-variant-numeric: tabular-nums;
-  min-width: 52px;
+  min-width: 75px !important;
+  width: 75px !important;
+  max-width: 75px !important;
+}
+
+.shiftCellInner {
+  position: relative;
+}
+
+.shiftSelect {
+  width: 100%;
+}
+
+.shiftSelect :global(.ant-select-selector) {
+  padding-right: var(--shift-selector-padding-right) !important;
+}
+
+.cellPendingSpinner {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: rgba(0, 0, 0, 0.55);
+  animation: spinMini 0.7s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes spinMini {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .shiftCell :global(.ant-select) {
@@ -68,74 +223,49 @@
   Goal: make borders match ScheduleTable (<table>) look: 1px solid #ddd
   Keep changes purely visual; do not affect print, since AntD table is not printed.
 */
-.settingsTable :global(.ant-table-container) {
-  border-color: #ddd !important;
-  border-radius: 0 !important;
-}
-
-.settingsTable :global(.ant-table) {
-  border-radius: 0 !important;
-}
-
-.settingsTable :global(.ant-table-thead > tr > th),
-.settingsTable :global(.ant-table-tbody > tr > td),
-.settingsTable :global(.ant-table-tbody > tr > th) {
-  border-color: #ddd !important;
-  text-align:center;
-  font-weight:600;
-}
-
-.settingsTable :global(.ant-table-small .ant-table-cell) {
-  padding: 2px !important;
-}
-
 /*
   Employee header (both: ScheduleTable <table> and AntD Table in ScheduleSettings)
   Goal: two-line layout (first name + last name) with fixed/stable header height
   and no overlap with table body.
 */
 .employeeHeaderCell {
-  position: relative;
+  position: sticky;
+  top: 0;
   vertical-align: bottom;
   padding: 0 !important;
   white-space: normal !important;
   line-height: 1.05;
-  min-width: 52px;
-  width: 52px;
-  min-height: 126px;
-  height: 126px;
+  min-width: 75px !important;
+  width: 75px !important;
+  max-width: 75px !important;
+  min-height: var(--employee-header-height);
+  height: var(--employee-header-height);
   cursor: default;
 }
 
 .employeeHeaderWrap {
-  position: absolute;
-  left: 45px;
-  bottom: 6px;
-
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 1px;
-
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: center;
+  gap: var(--employee-header-gap);
+  padding: 6px 1px;
   box-sizing: border-box;
-  max-width: 118px;
-  padding: 0;
-
-  transform: rotate(-90deg);
-  transform-origin: left bottom;
-
   cursor: default;
 }
 
 .employeeHeaderFirstName,
 .employeeHeaderLastName {
   display: block;
-  max-width: 116px;
+  max-height: 100%;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-align: left;
+  text-align: center;
   line-height: 1.05;
 }
 
@@ -166,50 +296,73 @@
   position: sticky;
   left: 0;
   z-index: 2;
-  min-width: 72px !important;
-  width: 72px;
+  min-width: 60px !important;
+  width: 60px !important;
+  max-width: 60px !important;
 }
 
 .dateHeader {
   background-color: #f9f9f9;
 }
 
-/* ScheduleSettings (Ustawienia grafiku) – date cell styling (AntD Table first column)
-   Requirement: weekday + day number horizontally, with neutral separation and subtle weekend highlight. */
-.settingsDateCell {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+@media (max-width: 1200px) {
+  .tableWrapper {
+    --table-font-size: 12px;
+    --table-cell-min-width: 48px;
+    --table-cell-padding-y: 2px;
+    --table-cell-padding-x: 1px;
+    --date-col-width: 60px;
+    --date-cell-gap: 5px;
+    --date-cell-padding-x: 3px;
+    --date-weekday-font-size: 11px;
+    --shift-selector-padding-right: 16px;
 
-  /* padding: 2px 8px; */
-  border: 1px solid #f0f0f0;
-  border-radius: 6px;
-  background-color: #fbfbfb;
-
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
+    --employee-col-width: 48px;
+    --employee-header-height: 118px;
+    --employee-header-left: 41px;
+    --employee-header-bottom: 5px;
+    --employee-header-max-width: 108px;
+    --employee-name-max-width: 106px;
+  }
 }
 
-.settingsDateNumber {
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.88);
+@media (max-width: 992px) {
+  .tableWrapper {
+    --table-font-size: 12px;
+    --table-cell-min-width: 44px;
+    --table-cell-padding-y: 1px;
+    --table-cell-padding-x: 1px;
+    --date-col-width: 60px;
+    --date-cell-gap: 4px;
+    --date-cell-padding-x: 2px;
+    --date-weekday-font-size: 10px;
+    --shift-selector-padding-right: 14px;
+
+    --employee-col-width: 44px;
+    --employee-header-height: 108px;
+    --employee-header-left: 38px;
+    --employee-header-bottom: 4px;
+    --employee-header-max-width: 98px;
+    --employee-name-max-width: 96px;
+  }
 }
 
-.settingsDateWeekday {
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
-}
+@media (max-width: 768px) {
+  .tableWrapper {
+    --table-font-size: 11px;
+    --table-cell-min-width: 40px;
+    --date-col-width: 60px;
+    --date-cell-gap: 3px;
+    --date-cell-padding-x: 2px;
+    --date-weekday-font-size: 10px;
 
-/* Subtle weekend highlight (Sat + Sun) */
-.settingsWeekendDateCell {
-  background-color: #fff7f7;
-  border-color: #ffe3e3;
-}
-
-.settingsWeekendDateCell .settingsDateNumber,
-.settingsWeekendDateCell .settingsDateWeekday {
-  color: rgba(140, 0, 0, 0.75);
+    --employee-col-width: 40px;
+    --employee-header-height: 98px;
+    --employee-header-left: 34px;
+    --employee-header-bottom: 3px;
+    --employee-header-max-width: 86px;
+    --employee-name-max-width: 84px;
+  }
 }
 
 .weekendShiftCell {
@@ -263,6 +416,12 @@
   flex-direction: column;
 }
 
+.legendCompact {
+  margin-top: 3px;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 12px;
+}
+
 .legendItem {
   display: flex;
   align-items: center;
@@ -302,6 +461,10 @@
   margin-bottom: 32px;
 }
 
+.screenOnly.departmentSection {
+  margin-bottom: 16px;
+}
+
 .tableTitle {
   margin-bottom: 8px;
   font-size: 1.2em;
@@ -313,34 +476,33 @@
 }
 
 @media print {
+  :global(body) {
+    margin: 0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  :global(.App > div:first-child),
+  :global(.ant-tabs-nav) {
+    display: none !important;
+  }
+
+  :global(.ant-tabs-content-holder),
+  :global(.ant-tabs-content),
+  :global(.ant-tabs-tabpane),
+  :global(.ant-tabs-tabpane-active) {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  .screenOnly,
   .noPrint {
-    display: none;
+    display: none !important;
   }
-  .tableWrapper {
-    overflow: visible;
-  }
-  .scheduleTable {
-    font-size: 10pt;
-  }
-  .employeeHeaderCell {
-    min-width: 42px;
-    width: 42px;
-    min-height: 100px;
-    height: 100px;
-    padding: 0 !important;
-  }
-  .employeeHeaderWrap {
-    left: 3px;
-    bottom: 4px;
-    max-width: 94px;
-    padding: 0;
-  }
-  .employeeHeaderFirstName,
-  .employeeHeaderLastName {
-    font-size: 9pt;
-    max-width: 92px;
-  }
-  .departmentSection {
-    page-break-after: always;
+
+  .printContainer {
+    margin: 0;
   }
 }
+

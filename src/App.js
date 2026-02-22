@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Tabs, ConfigProvider } from 'antd';
 // Updated import for Ant Design Polish locale (compatible with current AntD version).
 import plPL from 'antd/locale/pl_PL';
@@ -20,6 +20,7 @@ import './App.css';
 const DEFAULT_DEPARTMENT_NAMES = ['Stacja', 'Wild Bean Cafe'];
 
 function App() {
+  const SCHEDULE_SAVE_DEBOUNCE_MS = 400;
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [generatedSchedule, setGeneratedSchedule] = useState(null);
@@ -28,6 +29,8 @@ function App() {
   const [initialLoadCompleted, setInitialLoadCompleted] = useState(false);
   const [scheduleDepartmentId, setScheduleDepartmentId] = useState(null);
   const isScheduleBootstrapCompletedRef = useRef(false);
+  const pendingScheduleWritesRef = useRef(new Map());
+  const scheduleFlushTimerRef = useRef(null);
 
   const buildDepartmentId = departmentName => {
     if (!departmentName || typeof departmentName !== 'string') {
@@ -61,6 +64,86 @@ function App() {
     const matchedDepartment = departments.find(dept => String(dept.id) === String(departmentId));
     return matchedDepartment ? matchedDepartment.id : departmentId;
   };
+
+  const clearScheduleFlushTimer = useCallback(() => {
+    if (scheduleFlushTimerRef.current !== null) {
+      window.clearTimeout(scheduleFlushTimerRef.current);
+      scheduleFlushTimerRef.current = null;
+    }
+  }, []);
+
+  const flushPendingScheduleWrites = useCallback(() => {
+    clearScheduleFlushTimer();
+
+    if (pendingScheduleWritesRef.current.size === 0) {
+      return;
+    }
+
+    const pendingEntries = Array.from(pendingScheduleWritesRef.current.values());
+    pendingScheduleWritesRef.current.clear();
+
+    pendingEntries.forEach(({ departmentId, schedulePayload }) => {
+      upsertScheduleByDepartment(departmentId, schedulePayload);
+    });
+  }, [clearScheduleFlushTimer]);
+
+  const enqueueScheduleSave = useCallback(
+    (departmentId, schedulePayload) => {
+      if (!departmentId || !schedulePayload || typeof schedulePayload !== 'object') {
+        return;
+      }
+
+      const monthPart =
+        Number.isInteger(schedulePayload.month) || typeof schedulePayload.month === 'number'
+          ? schedulePayload.month
+          : 'na';
+      const yearPart =
+        Number.isInteger(schedulePayload.year) || typeof schedulePayload.year === 'number'
+          ? schedulePayload.year
+          : 'na';
+      const pendingKey = `${String(departmentId)}::${String(monthPart)}::${String(yearPart)}`;
+
+      pendingScheduleWritesRef.current.set(pendingKey, {
+        departmentId,
+        schedulePayload,
+      });
+
+      clearScheduleFlushTimer();
+      scheduleFlushTimerRef.current = window.setTimeout(() => {
+        flushPendingScheduleWrites();
+      }, SCHEDULE_SAVE_DEBOUNCE_MS);
+    },
+    [clearScheduleFlushTimer, flushPendingScheduleWrites]
+  );
+
+  useEffect(() => {
+    const handlePageLeave = () => {
+      flushPendingScheduleWrites();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        flushPendingScheduleWrites();
+      }
+    };
+
+    const handleBeforePrint = () => {
+      flushPendingScheduleWrites();
+    };
+
+    window.addEventListener('beforeunload', handlePageLeave);
+    window.addEventListener('pagehide', handlePageLeave);
+    window.addEventListener('beforeprint', handleBeforePrint);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handlePageLeave);
+      window.removeEventListener('pagehide', handlePageLeave);
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      flushPendingScheduleWrites();
+    };
+  }, [flushPendingScheduleWrites]);
 
   // Загрузка сотрудников при монтировании компонента
   useEffect(() => {
@@ -180,6 +263,8 @@ function App() {
 
   // Сохраняем сгенерированный график только в ветку выбранного отдела и переключаемся на вкладку "Grafik"
   const handleGenerateSchedule = scheduleData => {
+    flushPendingScheduleWrites();
+
     const normalizedDepartmentId = normalizeDepartmentId(selectedDepartment);
     if (!normalizedDepartmentId) return;
 
@@ -234,14 +319,28 @@ function App() {
     };
 
     setGeneratedSchedule(updated);
-    upsertScheduleByDepartment(normalizedDepartmentId, updated);
+    enqueueScheduleSave(normalizedDepartmentId, updated);
   };
 
   const handleDepartmentChange = departmentId => {
+    flushPendingScheduleWrites();
+
     const normalizedDepartmentId = normalizeDepartmentId(departmentId);
     setSelectedDepartment(normalizedDepartmentId);
     setScheduleDepartmentId(normalizedDepartmentId);
   };
+
+  const handleBeforePrint = useCallback(() => {
+    flushPendingScheduleWrites();
+  }, [flushPendingScheduleWrites]);
+
+  const handleTabChange = useCallback(
+    tabKey => {
+      flushPendingScheduleWrites();
+      setActiveTab(tabKey);
+    },
+    [flushPendingScheduleWrites]
+  );
 
   return (
     <ConfigProvider locale={plPL}>
@@ -260,7 +359,7 @@ function App() {
         </div>
         <Tabs
           activeKey={activeTab}
-          onChange={setActiveTab}
+          onChange={handleTabChange}
           items={[
             {
               key: 'employees',
@@ -297,6 +396,7 @@ function App() {
                   departments={departments}
                   employees={employees}
                   onCellChange={handleScheduleCellChange}
+                  onBeforePrint={handleBeforePrint}
                   selectedDepartment={scheduleDepartmentId}
                   onDepartmentChange={handleDepartmentChange}
                 />

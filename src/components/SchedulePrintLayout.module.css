@@ -1,0 +1,237 @@
+.printOnlyLayout {
+  display: none;
+}
+
+.printTitle {
+  margin: 0 0 6px;
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.printTableShell {
+  width: 100%;
+}
+
+.printTable {
+  width: max-content;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.printTable th,
+.printTable td {
+  border: 1px solid #8f8f8f;
+  text-align: center;
+  font-size: 9px;
+  line-height: 1.1;
+  padding: 1px 2px;
+  white-space: nowrap;
+}
+
+.printDateCol {
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+}
+
+.printEmployeeCol {
+  width: 75px;
+  min-width: 75px;
+  max-width: 80px;
+}
+
+.printDateHeaderCell,
+.printDateCell {
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+}
+
+.printDateHeaderCell {
+  background: #f1f1f1;
+  font-weight: 600;
+}
+
+.printEmployeeHeaderCell {
+  background: #f7f7f7;
+  font-weight: 600;
+  padding: 0;
+  min-width: 75px;
+  width: 75px;
+  max-width: 80px;
+  min-height: 88px;
+  height: 88px;
+  vertical-align: bottom;
+}
+
+.printEmployeeHeaderWrap {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 4px 2px;
+  box-sizing: border-box;
+}
+
+.printEmployeeHeaderFirstName,
+.printEmployeeHeaderLastName {
+  display: block;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  text-align: center;
+  line-height: 1.04;
+  max-height: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.printEmployeeHeaderFirstName {
+  font-weight: 600;
+}
+
+.printEmployeeHeaderLastName {
+  font-weight: 500;
+}
+
+.printDateCell {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.printDateCellContent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.printDateNumber {
+  color: rgba(0, 0, 0, 0.88);
+}
+
+.printDateWeekday {
+  color: rgba(0, 0, 0, 0.62);
+}
+
+.printWeekendDateCell {
+  background: #fff7f7;
+}
+
+.printShiftCell {
+  font-variant-numeric: tabular-nums;
+}
+
+.printWeekendShiftCell {
+  background-image: linear-gradient(rgba(255, 235, 235, 0.45), rgba(255, 235, 235, 0.45));
+}
+
+.shiftDay {
+  background-color: #d4edda;
+}
+
+.shiftNight {
+  background-color: #cce5ff;
+}
+
+.shiftOff {
+  background-color: #e2e3e5;
+}
+
+.shiftVacation {
+  background-color: #f8d7da;
+}
+
+@page {
+  size: A4 landscape;
+  margin: 8mm;
+}
+
+@media print {
+  .printOnlyLayout {
+    display: block !important;
+    width: 100%;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  .printTitle {
+    margin: 0 0 2.8mm;
+    font-size: 11.2pt;
+    line-height: 1.08;
+    break-after: avoid-page;
+    page-break-after: avoid;
+  }
+
+  .printTableShell {
+    overflow: visible;
+    width: 100%;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  .printTable {
+    width: max-content;
+    table-layout: fixed;
+    break-inside: avoid-page;
+  }
+
+  .printTable th,
+  .printTable td {
+    font-size: 9pt;
+    padding: 0.45mm 0.45mm;
+    line-height: 1.03;
+  }
+
+  .printDateCol,
+  .printDateHeaderCell,
+  .printDateCell {
+    width: 60px;
+    min-width: 60px;
+    max-width: 60px;
+  }
+
+  .printEmployeeCol {
+    width: 75px;
+    min-width: 75px;
+    max-width: 80px;
+  }
+
+  .printDateCellContent {
+    gap: 2px;
+    line-height: 1;
+  }
+
+  .printEmployeeHeaderCell {
+    width: 75px;
+    min-width: 75px;
+    max-width: 80px;
+    min-height: 90px;
+    height: 90px;
+    padding: 0 !important;
+    vertical-align: bottom;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .printEmployeeHeaderWrap {
+    gap: 1px;
+    padding: 0.7mm 0.45mm;
+  }
+
+  .printEmployeeHeaderFirstName,
+  .printEmployeeHeaderLastName {
+    line-height: 1.02;
+  }
+
+  .printTable tr,
+  .printTable td,
+  .printTable th {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
