@@ -47,7 +47,7 @@
   --table-cell-min-width: 52px;
   --table-cell-padding-y: 2px;
   --table-cell-padding-x: 2px;
-  --date-col-width: 72px;
+  --date-col-width: 60px;
   --date-cell-gap: 6px;
   --date-cell-padding-x: 4px;
   --date-weekday-font-size: 12px;
@@ -66,6 +66,18 @@
   border-collapse: collapse;
   width: max-content;
   min-width: 100%;
+  table-layout: fixed;
+}
+
+.dateCol {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+}
+
+.employeeCol {
+  width: var(--employee-col-width);
+  min-width: var(--employee-col-width);
 }
 
 .scheduleTable th,
@@ -89,33 +101,39 @@
 .stickyDateHeaderCell {
   left: 0;
   z-index: 7;
-  min-width: var(--date-col-width) !important;
-  width: var(--date-col-width);
+  min-width: 60px !important;
+  width: 60px !important;
+  max-width: 60px !important;
   background-color: #f5f5f5;
   background-clip: padding-box;
   box-shadow: 1px 0 0 #ddd;
+  overflow: hidden;
 }
 
 .stickyDateCell {
   position: sticky;
   left: 0;
   z-index: 4;
-  min-width: var(--date-col-width) !important;
-  width: var(--date-col-width);
+  min-width: 60px !important;
+  width: 60px !important;
+  max-width: 60px !important;
   background-color: #fafafa;
   background-clip: padding-box;
   box-shadow: 1px 0 0 #ddd;
+  overflow: hidden;
 }
 
 .grafikDateCell {
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   align-items: center;
   justify-content: center;
   gap: var(--date-cell-gap);
   border-radius: 4px;
-  padding: 0 var(--date-cell-padding-x);
+  padding: 0;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  overflow: hidden;
 }
 
 .grafikDateNumber {
@@ -216,34 +234,28 @@
 }
 
 .employeeHeaderWrap {
-  position: absolute;
-  left: var(--employee-header-left);
-  bottom: var(--employee-header-bottom);
-
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: center;
   gap: var(--employee-header-gap);
-
+  padding: 6px 1px;
   box-sizing: border-box;
-  max-width: var(--employee-header-max-width);
-  padding: 0;
-
-  transform: rotate(-90deg);
-  transform-origin: left bottom;
-
   cursor: default;
 }
 
 .employeeHeaderFirstName,
 .employeeHeaderLastName {
   display: block;
-  max-width: var(--employee-name-max-width);
+  max-height: 100%;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-align: left;
+  text-align: center;
   line-height: 1.05;
 }
 
@@ -274,8 +286,9 @@
   position: sticky;
   left: 0;
   z-index: 2;
-  min-width: 72px !important;
-  width: 72px;
+  min-width: 60px !important;
+  width: 60px !important;
+  max-width: 60px !important;
 }
 
 .dateHeader {
@@ -288,7 +301,7 @@
     --table-cell-min-width: 48px;
     --table-cell-padding-y: 2px;
     --table-cell-padding-x: 1px;
-    --date-col-width: 68px;
+    --date-col-width: 60px;
     --date-cell-gap: 5px;
     --date-cell-padding-x: 3px;
     --date-weekday-font-size: 11px;
@@ -309,7 +322,7 @@
     --table-cell-min-width: 44px;
     --table-cell-padding-y: 1px;
     --table-cell-padding-x: 1px;
-    --date-col-width: 64px;
+    --date-col-width: 60px;
     --date-cell-gap: 4px;
     --date-cell-padding-x: 2px;
     --date-weekday-font-size: 10px;
@@ -482,3 +495,4 @@
     margin: 0;
   }
 }
+
