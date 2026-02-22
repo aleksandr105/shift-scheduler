@@ -1,6 +1,13 @@
-.settingsTableViewport {
+.settingsTableCenter {
   width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.settingsTableViewport {
+  width: fit-content;
   max-width: 100%;
+  margin: 0 auto;
   overflow: auto;
   border: 1px solid #ddd;
   isolation: isolate;
@@ -14,17 +21,16 @@
   --settings-table-cell-padding-y: 2px;
   --settings-table-cell-padding-x: 2px;
 
-  --settings-date-col-width: 72px;
-  --settings-employee-col-width: 44px;
+  --settings-date-col-width: 60px;
+  --settings-employee-col-width: 55px;
   --settings-header-height: 132px;
   --settings-header-gap: 3px;
 }
 
 .settingsTable {
   width: max-content;
-  min-width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .settingsTable th,
@@ -48,29 +54,54 @@
 }
 
 .settingsStickyDateHeaderCell {
+  position: relative;
+  position: sticky;
   left: 0;
   z-index: 12;
   width: var(--settings-date-col-width);
+  max-width: var(--settings-date-col-width);
   min-width: var(--settings-date-col-width) !important;
-  box-shadow: 1px 0 0 #ddd;
   background: #f5f5f5;
 }
 
+.settingsStickyDateHeaderCell::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  bottom: -1px;
+  width: 1px;
+  background: #d9d9d9;
+  pointer-events: none;
+}
+
 .settingsStickyDateCell {
+  position: relative;
   position: sticky;
   left: 0;
   z-index: 6;
   width: var(--settings-date-col-width);
+  max-width: var(--settings-date-col-width);
   min-width: var(--settings-date-col-width) !important;
   background: #fafafa;
   background-clip: padding-box;
-  box-shadow: 1px 0 0 #ddd;
+}
+
+.settingsStickyDateCell::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  bottom: -1px;
+  width: 1px;
+  background: #d9d9d9;
+  pointer-events: none;
 }
 
 .settingsEmployeeHeaderCell {
-  width: var(--settings-employee-col-width);
-  min-width: var(--settings-employee-col-width);
-  max-width: var(--settings-employee-col-width);
+  width: var(--settings-employee-col-width) !important;
+  min-width: var(--settings-employee-col-width) !important;
+  max-width: var(--settings-employee-col-width) !important;
   height: var(--settings-header-height);
   min-height: var(--settings-header-height);
   vertical-align: bottom;
@@ -81,9 +112,9 @@
   height: 100%;
   width: 100%;
   display: flex;
-  flex-direction: column;
+  flex-direction: row-reverse;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: var(--settings-header-gap);
   padding: 6px 1px;
   box-sizing: border-box;
@@ -97,7 +128,7 @@
   writing-mode: vertical-rl;
   text-orientation: mixed;
   line-height: 1.05;
-  text-align: left;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -150,7 +181,9 @@
 
 .shiftCell {
   font-variant-numeric: tabular-nums;
-  min-width: var(--settings-table-cell-min-width);
+  width: var(--settings-employee-col-width) !important;
+  min-width: var(--settings-employee-col-width) !important;
+  max-width: var(--settings-employee-col-width) !important;
 }
 
 .weekendShiftCell {
@@ -193,8 +226,8 @@
   .settingsTableViewport {
     --settings-table-font-size: 12px;
     --settings-table-cell-min-width: 48px;
-    --settings-date-col-width: 68px;
-    --settings-employee-col-width: 42px;
+    --settings-date-col-width: 60px;
+    --settings-employee-col-width: 55px;
     --settings-header-height: 124px;
     --settings-header-gap: 2px;
   }
@@ -204,8 +237,8 @@
   .settingsTableViewport {
     --settings-table-font-size: 12px;
     --settings-table-cell-min-width: 46px;
-    --settings-date-col-width: 64px;
-    --settings-employee-col-width: 40px;
+    --settings-date-col-width: 60px;
+    --settings-employee-col-width: 55px;
     --settings-header-height: 114px;
   }
 }
@@ -215,7 +248,7 @@
     --settings-table-font-size: 11px;
     --settings-table-cell-min-width: 46px;
     --settings-date-col-width: 60px;
-    --settings-employee-col-width: 36px;
+    --settings-employee-col-width: 55px;
     --settings-header-height: 104px;
     max-height: calc(100vh - 300px);
   }
