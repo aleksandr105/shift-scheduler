@@ -14,7 +14,7 @@
 }
 
 .printTable {
-  width: 100%;
+  width: max-content;
   border-collapse: collapse;
   table-layout: fixed;
 }
@@ -29,10 +29,23 @@
   white-space: nowrap;
 }
 
+.printDateCol {
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+}
+
+.printEmployeeCol {
+  width: 75px;
+  min-width: 75px;
+  max-width: 80px;
+}
+
 .printDateHeaderCell,
 .printDateCell {
-  width: 52px;
-  min-width: 52px;
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
 }
 
 .printDateHeaderCell {
@@ -43,15 +56,46 @@
 .printEmployeeHeaderCell {
   background: #f7f7f7;
   font-weight: 600;
-  padding: 1px;
+  padding: 0;
+  min-width: 75px;
+  width: 75px;
+  max-width: 80px;
+  min-height: 88px;
+  height: 88px;
+  vertical-align: bottom;
 }
 
-.printEmployeeHeaderText {
+.printEmployeeHeaderWrap {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 4px 2px;
+  box-sizing: border-box;
+}
+
+.printEmployeeHeaderFirstName,
+.printEmployeeHeaderLastName {
   display: block;
-  max-width: 100%;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  text-align: center;
+  line-height: 1.04;
+  max-height: 100%;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.printEmployeeHeaderFirstName {
+  font-weight: 600;
+}
+
+.printEmployeeHeaderLastName {
+  font-weight: 500;
 }
 
 .printDateCell {
@@ -117,7 +161,7 @@
 
   .printTitle {
     margin: 0 0 2.8mm;
-    font-size: 10.8pt;
+    font-size: 11.2pt;
     line-height: 1.08;
     break-after: avoid-page;
     page-break-after: avoid;
@@ -131,22 +175,30 @@
   }
 
   .printTable {
-    width: 100%;
+    width: max-content;
     table-layout: fixed;
     break-inside: avoid-page;
   }
 
   .printTable th,
   .printTable td {
-    font-size: 7.4pt;
+    font-size: 9pt;
     padding: 0.45mm 0.45mm;
-    line-height: 1;
+    line-height: 1.03;
   }
 
+  .printDateCol,
   .printDateHeaderCell,
   .printDateCell {
-    width: 14mm;
-    min-width: 14mm;
+    width: 60px;
+    min-width: 60px;
+    max-width: 60px;
+  }
+
+  .printEmployeeCol {
+    width: 75px;
+    min-width: 75px;
+    max-width: 80px;
   }
 
   .printDateCellContent {
@@ -155,29 +207,25 @@
   }
 
   .printEmployeeHeaderCell {
-    width: 7.8mm;
-    min-width: 7.8mm;
-    max-width: 7.8mm;
-    min-height: 14mm;
-    padding: 0.35mm 0.3mm !important;
+    width: 75px;
+    min-width: 75px;
+    max-width: 80px;
+    min-height: 90px;
+    height: 90px;
+    padding: 0 !important;
     vertical-align: bottom;
-    text-align: left;
+    text-align: center;
     overflow: hidden;
   }
 
-  .printEmployeeHeaderText {
-    display: block;
-    writing-mode: vertical-lr;
-    direction: ltr;
-    text-orientation: mixed;
-    white-space: normal;
-    text-overflow: clip;
-    overflow: visible;
-    word-break: keep-all;
-    overflow-wrap: anywhere;
+  .printEmployeeHeaderWrap {
+    gap: 1px;
+    padding: 0.7mm 0.45mm;
+  }
+
+  .printEmployeeHeaderFirstName,
+  .printEmployeeHeaderLastName {
     line-height: 1.02;
-    max-block-size: 100%;
-    text-align: left;
   }
 
   .printTable tr,

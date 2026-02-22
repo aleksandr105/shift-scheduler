@@ -94,6 +94,12 @@ const SchedulePrintLayout = ({ generatedSchedule, departmentName, employees }) =
 
       <div className={styles.printTableShell}>
         <table className={styles.printTable}>
+          <colgroup>
+            <col className={styles.printDateCol} />
+            {employees.map(employee => (
+              <col key={`print-col-${employee.id}`} className={styles.printEmployeeCol} />
+            ))}
+          </colgroup>
           <thead>
             <tr>
               <th className={styles.printDateHeaderCell}>Data</th>
@@ -104,7 +110,12 @@ const SchedulePrintLayout = ({ generatedSchedule, departmentName, employees }) =
 
                 return (
                   <th key={employee.id} className={styles.printEmployeeHeaderCell} title={fullName}>
-                    <span className={styles.printEmployeeHeaderText}>{fullName || '-'}</span>
+                    <div className={styles.printEmployeeHeaderWrap}>
+                      <span className={styles.printEmployeeHeaderFirstName}>
+                        {firstName || '-'}
+                      </span>
+                      <span className={styles.printEmployeeHeaderLastName}>{lastName || '-'}</span>
+                    </div>
                   </th>
                 );
               })}
