@@ -404,6 +404,15 @@ function App() {
             },
           ]}
         />
+        <footer className="app-footer">
+          <div>Twórca: Oleksandr Shcherbyna.</div>
+          <div>
+            W razie pytań i sugestii pisz na:{' '}
+            <a href="mailto:aleksandrsherbina105@gmail.com" className="app-footer-link">
+              aleksandrsherbina105@gmail.com
+            </a>
+          </div>
+        </footer>
       </div>
     </ConfigProvider>
   );

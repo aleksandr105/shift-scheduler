@@ -1,6 +1,9 @@
 .App {
   text-align: center;
   padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .App-logo {
@@ -51,4 +54,23 @@
 h1 {
   text-align: center;
   margin-bottom: 30px;
+}
+
+.app-footer {
+  margin-top: auto;
+  padding-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+}
+
+.app-footer-link {
+  color: inherit;
+  text-decoration: underline;
+}
+
+@media print {
+  .app-footer {
+    display: none !important;
+  }
 }

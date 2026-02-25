@@ -14,7 +14,7 @@
 }
 
 .printTable {
-  width: max-content;
+  width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
 }
@@ -36,9 +36,8 @@
 }
 
 .printEmployeeCol {
-  width: 75px;
-  min-width: 75px;
-  max-width: 80px;
+  width: var(--print-employee-col-width, 75px);
+  max-width: 75px;
 }
 
 .printDateHeaderCell,
@@ -57,9 +56,8 @@
   background: #f7f7f7;
   font-weight: 600;
   padding: 0;
-  min-width: 75px;
-  width: 75px;
-  max-width: 80px;
+  width: var(--print-employee-col-width, 75px);
+  max-width: 75px;
   min-height: 88px;
   height: 88px;
   vertical-align: bottom;
@@ -148,7 +146,7 @@
 
 @page {
   size: A4 landscape;
-  margin: 8mm;
+  margin: 4mm;
 }
 
 @media print {
@@ -175,7 +173,7 @@
   }
 
   .printTable {
-    width: max-content;
+    width: 100%;
     table-layout: fixed;
     break-inside: avoid-page;
   }
@@ -196,9 +194,8 @@
   }
 
   .printEmployeeCol {
-    width: 75px;
-    min-width: 75px;
-    max-width: 80px;
+    width: var(--print-employee-col-width, 75px);
+    max-width: 75px;
   }
 
   .printDateCellContent {
@@ -207,9 +204,8 @@
   }
 
   .printEmployeeHeaderCell {
-    width: 75px;
-    min-width: 75px;
-    max-width: 80px;
+    width: var(--print-employee-col-width, 75px);
+    max-width: 75px;
     min-height: 90px;
     height: 90px;
     padding: 0 !important;
