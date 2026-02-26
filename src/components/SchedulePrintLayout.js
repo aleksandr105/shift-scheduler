@@ -22,7 +22,7 @@ const PRINT_A4_LANDSCAPE_WIDTH_MM = 297;
 const PRINT_PAGE_MARGIN_MM = 4;
 const PX_PER_MM = 96 / 25.4;
 const PRINT_DATE_COL_WIDTH_PX = 60;
-const PRINT_EMPLOYEE_COL_MAX_WIDTH_PX = 75;
+const PRINT_EMPLOYEE_COL_MAX_WIDTH_PX = 70;
 
 const hasSaturdayRestriction = employee => {
   if (!employee) return false;
@@ -90,12 +90,14 @@ const SchedulePrintLayout = ({ generatedSchedule, departmentName, employees }) =
     return null;
   }
 
+  const employeeCount = employees.length;
+
   const monthName = monthNames[month] || '';
   const printableWidthPx =
     (PRINT_A4_LANDSCAPE_WIDTH_MM - PRINT_PAGE_MARGIN_MM * 2) * PX_PER_MM - PRINT_DATE_COL_WIDTH_PX;
   const printEmployeeColWidthPx = Math.min(
     PRINT_EMPLOYEE_COL_MAX_WIDTH_PX,
-    printableWidthPx / employees.length
+    printableWidthPx / employeeCount
   );
 
   return (

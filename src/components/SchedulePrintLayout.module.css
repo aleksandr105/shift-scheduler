@@ -10,11 +10,13 @@
 }
 
 .printTableShell {
-  width: 100%;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
 }
 
 .printTable {
-  width: 100%;
+  width: max-content;
   border-collapse: collapse;
   table-layout: fixed;
 }
@@ -36,8 +38,9 @@
 }
 
 .printEmployeeCol {
-  width: var(--print-employee-col-width, 75px);
-  max-width: 75px;
+  width: var(--print-employee-col-width, 70px);
+  min-width: var(--print-employee-col-width, 70px);
+  max-width: var(--print-employee-col-width, 70px);
 }
 
 .printDateHeaderCell,
@@ -56,8 +59,9 @@
   background: #f7f7f7;
   font-weight: 600;
   padding: 0;
-  width: var(--print-employee-col-width, 75px);
-  max-width: 75px;
+  width: var(--print-employee-col-width, 70px);
+  min-width: var(--print-employee-col-width, 70px);
+  max-width: var(--print-employee-col-width, 70px);
   min-height: 88px;
   height: 88px;
   vertical-align: bottom;
@@ -167,13 +171,15 @@
 
   .printTableShell {
     overflow: visible;
-    width: 100%;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
     break-inside: avoid-page;
     page-break-inside: avoid;
   }
 
   .printTable {
-    width: 100%;
+    width: max-content;
     table-layout: fixed;
     break-inside: avoid-page;
   }
@@ -194,8 +200,9 @@
   }
 
   .printEmployeeCol {
-    width: var(--print-employee-col-width, 75px);
-    max-width: 75px;
+    width: var(--print-employee-col-width, 70px);
+    min-width: var(--print-employee-col-width, 70px);
+    max-width: var(--print-employee-col-width, 70px);
   }
 
   .printDateCellContent {
@@ -204,8 +211,9 @@
   }
 
   .printEmployeeHeaderCell {
-    width: var(--print-employee-col-width, 75px);
-    max-width: 75px;
+    width: var(--print-employee-col-width, 70px);
+    min-width: var(--print-employee-col-width, 70px);
+    max-width: var(--print-employee-col-width, 70px);
     min-height: 90px;
     height: 90px;
     padding: 0 !important;
